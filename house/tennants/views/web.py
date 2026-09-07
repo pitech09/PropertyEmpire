@@ -246,24 +246,6 @@ def dashboard(request):
     else:
         percent_occupied = 0.0
     
-    # Marketplace inquiries for this landlord's properties
-    pending_inquiries = []
-    accepted_inquiries = []
-    try:
-        owner_profile = getattr(request.user, "marketplace_owner_profile", None)
-        if owner_profile:
-            from marketplace.models import PropertyInquiry
-            pending_inquiries = PropertyInquiry.objects.filter(
-                property__owner_profile=owner_profile,
-                status=PropertyInquiry.STATUS_PENDING,
-            ).select_related("property").order_by("-created_at")[:5]
-            accepted_inquiries = PropertyInquiry.objects.filter(
-                property__owner_profile=owner_profile,
-                status=PropertyInquiry.STATUS_ACCEPTED,
-            ).select_related("property").order_by("-accepted_at")[:5]
-    except Exception:
-        pass
-
     context = {
         'buildings': buildings,
         'total_houses': total_houses,
@@ -279,8 +261,6 @@ def dashboard(request):
         'resolved_issues': resolved_issues,
         'pending_payment_requests': pending_payment_requests,
         'percent_occupied': percent_occupied,
-        'pending_inquiries': pending_inquiries,
-        'accepted_inquiries': accepted_inquiries,
     }
     return render(request, 'dashboard.html', context)
 
@@ -517,20 +497,6 @@ def owner_dashboard(request):
     occupied_houses = House.objects.filter(occupation=True).count()
     occupancy_rate = round((occupied_houses / total_houses) * 100, 2) if total_houses else 0
 
-    # --- Guesthouse financials (separate ledger from rentals) ---
-    from guesthouse.models import GuestPayment
-    from guesthouse.services.financials import compute_platform_costs
-
-    guesthouse_revenue = (
-        GuestPayment.objects.aggregate(total=Sum("amount"))["total"]
-        or Decimal("0.00")
-    )
-    guesthouse_breakdown = compute_platform_costs(
-        guesthouse_revenue, include_monthly_subscription=False
-    )
-    guesthouse_platform_fee = guesthouse_breakdown["platform_fee"]
-    guesthouse_payment_count = GuestPayment.objects.count()
-
     context = {
         "landlord_rows": landlord_rows,
         "landlord_count": landlords.count(),
@@ -553,14 +519,9 @@ def owner_dashboard(request):
         # Rental platform revenue split
         "rental_transaction_revenue": platform_transaction_revenue,
         "subscription_revenue": subscription_revenue,
-        # Guesthouse totals (explicit split)
-        "guesthouse_revenue": guesthouse_revenue,
-        "guesthouse_platform_fee": guesthouse_platform_fee,
-        "guesthouse_payment_count": guesthouse_payment_count,
-        # Combined platform revenue (rental tx + guesthouse tx + subscriptions)
-        "platform_transaction_revenue": platform_transaction_revenue + guesthouse_platform_fee,
+        "platform_transaction_revenue": platform_transaction_revenue,
         "total_platform_revenue": (
-            platform_transaction_revenue + guesthouse_platform_fee + subscription_revenue
+            platform_transaction_revenue + subscription_revenue
         ),
         "transaction_fee_rate": settings.PLATFORM_TRANSACTION_FEE_RATE,
         "monthly_subscription": settings.LANDLORD_MONTHLY_SUBSCRIPTION,
@@ -1479,92 +1440,6 @@ def accept_bid(request, bid_id):
         f"Issue status updated to 'In Progress'."
     )
     return redirect("issue_bids", issue_id=bid.issue_id)
-
-
-# ============================================================================
-# PROPERTY LOCATION VIEWS (Update via browser geolocation)
-# ============================================================================
-
-@login_required
-def update_location(request):
-    """Allow property owners to update their property location (House & Room) via browser geolocation."""
-    from marketplace.models import Property
-    from django.contrib.contenttypes.models import ContentType
-
-    # Collect all properties owned by this user (via House/Room with user FK)
-    from guesthouse.models import Room
-    user_houses = House.objects.filter(user=request.user).select_related("flat_building")
-    user_rooms = Room.objects.filter(room_type__isnull=False).none()  # placeholder
-    # For guesthouse rooms, no direct user FK; treat all rooms for admin, or include those via marketplace Property owner
-
-    # Also fetch marketplace properties owned by this user
-    marketplace_props = Property.objects.filter(
-        owner_profile__user=request.user, marketplace_enabled=True
-    ).select_related("owner_profile")
-
-    # Stats
-    total_houses = user_houses.count()
-    houses_with_location = user_houses.exclude(latitude__isnull=True, longitude__isnull=True).count()
-    total_props = marketplace_props.count()
-    props_with_location = marketplace_props.exclude(latitude__isnull=True, longitude__isnull=True).count()
-
-    if request.method == "POST":
-        # AJAX endpoint expects: property_type, property_id, latitude, longitude
-        property_type = request.POST.get("property_type")  # "house" or "room" or "marketplace"
-        property_id = request.POST.get("property_id")
-        try:
-            lat = float(request.POST.get("latitude", ""))
-            lng = float(request.POST.get("longitude", ""))
-        except (TypeError, ValueError):
-            messages.error(request, "Invalid coordinates provided.")
-            return redirect("update_location")
-
-        if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
-            messages.error(request, "Coordinates out of valid range.")
-            return redirect("update_location")
-
-        updated = False
-        if property_type == "house" and property_id:
-            try:
-                house = House.objects.get(pk=int(property_id), user=request.user)
-                house.latitude = lat
-                house.longitude = lng
-                house.save(update_fields=["latitude", "longitude"])
-                # Update all marketplace properties linked to this house
-                ct = ContentType.objects.get_for_model(House)
-                Property.objects.filter(
-                    source_content_type=ct, source_object_id=house.pk
-                ).update(latitude=lat, longitude=lng)
-                updated = True
-            except House.DoesNotExist:
-                pass
-        elif property_type == "marketplace" and property_id:
-            try:
-                prop = Property.objects.get(
-                    pk=int(property_id), owner_profile__user=request.user
-                )
-                prop.latitude = lat
-                prop.longitude = lng
-                prop.save(update_fields=["latitude", "longitude"])
-                updated = True
-            except Property.DoesNotExist:
-                pass
-
-        if updated:
-            messages.success(request, f"Location updated successfully! ({lat:.6f}, {lng:.6f})")
-        else:
-            messages.error(request, "Could not update location. Property not found or you don't have permission.")
-        return redirect("update_location")
-
-    context = {
-        "user_houses": user_houses,
-        "marketplace_props": marketplace_props,
-        "total_houses": total_houses,
-        "houses_with_location": houses_with_location,
-        "total_props": total_props,
-        "props_with_location": props_with_location,
-    }
-    return render(request, "tennants/update_location.html", context)
 
 
 # ============================================================================

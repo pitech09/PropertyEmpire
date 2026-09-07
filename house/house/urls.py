@@ -45,7 +45,5 @@ urlpatterns = [
     path("dashboard/", dashboard, name="dashboard"),
     path("tenant/dashboard/", tenant_dashboard, name="tenant_dashboard"),
     path("tenant/report/", report_issue, name="report_issue"),
-    path("guesthouse/", include("guesthouse.urls")),
-    path("marketplace/", include("marketplace.urls")),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

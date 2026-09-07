@@ -109,8 +109,6 @@ INSTALLED_APPS = [
     "cloudinary_storage",
     "cloudinary",
     "tennants",
-    "guesthouse",
-    "marketplace",
     "rest_framework",
     "rest_framework.authtoken",
     "phonenumber_field",
@@ -186,58 +184,6 @@ UNFOLD = {
                     },
                 ],
             },
-            {
-                "title": "Guest House",
-                "separator": True,
-                "collapsible": True,
-                "items": [
-                    {
-                        "title": "Dashboard",
-                        "icon": "dashboard",
-                        "link": "/guesthouse/",
-                    },
-                    {
-                        "title": "Rooms",
-                        "icon": "bed",
-                        "link": "/admin/guesthouse/room/",
-                    },
-                    {
-                        "title": "Room Types",
-                        "icon": "category",
-                        "link": "/admin/guesthouse/roomtype/",
-                    },
-                    {
-                        "title": "Guests",
-                        "icon": "people",
-                        "link": "/admin/guesthouse/guest/",
-                    },
-                    {
-                        "title": "Bookings",
-                        "icon": "event",
-                        "link": "/admin/guesthouse/booking/",
-                    },
-                    {
-                        "title": "Check In / Out",
-                        "icon": "login",
-                        "link": "/guesthouse/reception/",
-                    },
-                    {
-                        "title": "Payments",
-                        "icon": "payments",
-                        "link": "/admin/guesthouse/guestpayment/",
-                    },
-                    {
-                        "title": "Maintenance",
-                        "icon": "build",
-                        "link": "/admin/guesthouse/roommaintenance/",
-                    },
-                    {
-                        "title": "Reports",
-                        "icon": "analytics",
-                        "link": "/guesthouse/reports/",
-                    },
-                ],
-            },
         ],
     },
 }
@@ -309,17 +255,25 @@ WSGI_APPLICATION = "house.wsgi.application"
 
 
 # Database
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("DB_NAME"),
+#         "USER": os.environ.get("DB_USER"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD"),
+#         "HOST": os.environ.get("DB_HOST"),
+#         "PORT": os.environ.get("DB_PORT"),
+#         "OPTIONS": {
+#             "sslmode": os.environ.get("DB_SSLMODE", "require"),
+#         },
+#     }
+# }
+
+# SQLite database
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT"),
-        "OPTIONS": {
-            "sslmode": os.environ.get("DB_SSLMODE", "require"),
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
