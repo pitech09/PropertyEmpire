@@ -4,17 +4,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PropertyEmpire — Smart Property & Guesthouse Management</title>
-    <meta name="description" content="The all-in-one platform for rental property management, guesthouse operations, and a property marketplace. Built for landlords, caretakers, and guesthouse owners.">
+    <title>PropertyEmpire — Smart Rental Property Management</title>
+    <meta name="description" content="The all-in-one platform for landlords and property managers. Track rentals, tenants, payments, and list properties on the marketplace.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     <style>
+        /* ====== FACEBOOK-INSPIRED LIGHT DESIGN SYSTEM ====== */
+        :root {
+            --fb-blue: #1877F2;
+            --fb-blue-hover: #166FE5;
+            --fb-bg: #F0F2F5;
+            --fb-card: #FFFFFF;
+            --fb-dark: #050505;
+            --fb-gray: #65676B;
+            --fb-light-gray: #F0F2F5;
+            --fb-border: #CED0D4;
+            --fb-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            --fb-shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+            --fb-radius: 8px;
+            --fb-radius-sm: 6px;
+            --fb-radius-pill: 50px;
+            --max-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--fb-bg);
+            color: var(--fb-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
         /* ====== LOADING SPINNER ====== */
         #page-loader {
             position: fixed;
             inset: 0;
-            background: #fafafa;
+            background: var(--fb-bg);
             display: none;
             align-items: center;
             justify-content: center;
@@ -29,50 +69,18 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 3px solid #e5e5e5;
-            border-top-color: #0071e3;
+            border: 3px solid #E4E6EB;
+            border-top-color: var(--fb-blue);
             animation: spin 0.7s linear infinite;
         }
         .spinner-text {
             margin-top: 16px;
-            color: #86868b;
+            color: var(--fb-gray);
             font-size: 0.85rem;
             font-weight: 500;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             letter-spacing: 0.02em;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ====== APPLE DESIGN SYSTEM ====== */
-        :root {
-            --apple-blue: #0071e3;
-            --apple-blue-hover: #0077ED;
-            --apple-bg: #fbfbfd;
-            --apple-dark: #1d1d1f;
-            --apple-gray: #86868b;
-            --apple-light-gray: #f5f5f7;
-            --apple-border: #d2d2d7;
-            --apple-card: #ffffff;
-            --apple-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            --apple-shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-            --apple-radius: 18px;
-            --apple-radius-sm: 12px;
-            --apple-radius-pill: 980px;
-            --max-width: 980px;
-            --max-width-wide: 1200px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--apple-bg);
-            color: var(--apple-dark);
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.5;
-        }
 
         /* ====== NAVIGATION ====== */
         .nav {
@@ -81,11 +89,10 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            height: 52px;
-            background: rgba(251, 251, 253, 0.72);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 0.5px solid rgba(0,0,0,0.08);
+            height: 56px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--fb-border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         .nav-inner {
             max-width: var(--max-width);
@@ -94,97 +101,128 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 22px;
+            padding: 0 16px;
+            gap: 10px;
         }
         .nav-brand {
             display: flex;
             align-items: center;
             gap: 8px;
             text-decoration: none;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--apple-dark);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--fb-blue);
             letter-spacing: -0.02em;
+            flex-shrink: 0;
         }
         .nav-brand svg {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
+        }
+        .nav-search {
+            flex: 1;
+            max-width: 400px;
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            background: var(--fb-light-gray);
+            border-radius: var(--fb-radius-pill);
+            padding: 0 16px;
+            height: 40px;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .nav-search:focus-within {
+            background: #FFFFFF;
+            box-shadow: 0 0 0 2px var(--fb-blue);
+        }
+        .nav-search svg {
+            width: 16px;
+            height: 16px;
+            color: var(--fb-gray);
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .nav-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--fb-dark);
+            font-family: inherit;
+        }
+        .nav-search input::placeholder {
+            color: var(--fb-gray);
         }
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             list-style: none;
+            flex-shrink: 0;
         }
         .nav-links a {
             text-decoration: none;
-            padding: 6px 14px;
-            border-radius: var(--apple-radius-pill);
-            font-size: 0.82rem;
-            font-weight: 400;
-            color: var(--apple-dark);
-            transition: background 0.25s ease, color 0.25s ease;
+            padding: 8px 16px;
+            border-radius: var(--fb-radius-pill);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--fb-dark);
+            transition: background 0.2s ease;
         }
         .nav-links a:hover {
-            background: rgba(0,0,0,0.06);
-        }
-        .nav-links .nav-marketplace {
-            color: var(--apple-blue);
-            font-weight: 500;
+            background: var(--fb-light-gray);
         }
         .nav-links .nav-signin {
-            color: var(--apple-gray);
-        }
-        .nav-links .nav-signin:hover {
-            color: var(--apple-dark);
+            color: var(--fb-blue);
+            font-weight: 600;
         }
         .nav-links .nav-cta {
-            background: var(--apple-blue);
-            color: #fff;
-            font-weight: 500;
-            padding: 6px 16px;
+            background: var(--fb-blue);
+            color: #FFFFFF;
+            font-weight: 600;
+            padding: 8px 20px;
         }
         .nav-links .nav-cta:hover {
-            background: var(--apple-blue-hover);
+            background: var(--fb-blue-hover);
         }
 
         /* ====== HERO SECTION ====== */
         .hero {
-            padding-top: 52px;
-            min-height: 100vh;
+            padding-top: 56px;
+            min-height: 90vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 100%);
-            position: relative;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F0F2F5 100%);
         }
         .hero-inner {
-            max-width: 720px;
-            padding: 80px 24px 60px;
+            max-width: 750px;
+            padding: 60px 24px 40px;
         }
         .hero-overline {
             display: inline-block;
             font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--apple-blue);
+            font-weight: 600;
+            color: var(--fb-blue);
             letter-spacing: 0.03em;
             margin-bottom: 12px;
-            padding: 5px 14px;
-            background: rgba(0, 113, 227, 0.08);
-            border-radius: var(--apple-radius-pill);
+            padding: 6px 16px;
+            background: rgba(24,119,242,0.08);
+            border-radius: var(--fb-radius-pill);
         }
         .hero h1 {
-            font-size: clamp(2.8rem, 6vw, 4.4rem);
+            font-size: clamp(2.5rem, 5.5vw, 4rem);
             font-weight: 700;
-            letter-spacing: -0.04em;
-            line-height: 1.08;
-            color: var(--apple-dark);
-            margin-bottom: 18px;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: var(--fb-dark);
+            margin-bottom: 16px;
         }
         .hero h1 .hero-gradient {
-            background: linear-gradient(90deg, #0071e3, #34c759, #0071e3);
+            background: linear-gradient(90deg, #1877F2, #42b72a, #1877F2);
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -196,15 +234,33 @@
             50% { background-position: 100% center; }
         }
         .hero p {
-            font-size: clamp(1.05rem, 2vw, 1.25rem);
-            color: var(--apple-gray);
-            max-width: 540px;
-            margin: 0 auto 32px;
-            line-height: 1.55;
-            font-weight: 400;
+            font-size: clamp(1.05rem, 2vw, 1.2rem);
+            color: var(--fb-gray);
+            max-width: 560px;
+            margin: 0 auto 24px;
+            line-height: 1.5;
         }
-
-        /* Hero Action Buttons */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .hero-stat {
+            text-align: center;
+        }
+        .hero-stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--fb-dark);
+            letter-spacing: -0.02em;
+        }
+        .hero-stat-label {
+            font-size: 0.8rem;
+            color: var(--fb-gray);
+        }
         .hero-actions {
             display: flex;
             gap: 12px;
@@ -215,41 +271,40 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 14px 28px;
-            border-radius: var(--apple-radius-pill);
+            padding: 12px 24px;
+            border-radius: var(--fb-radius-pill);
             font-size: 0.95rem;
-            font-weight: 500;
+            font-weight: 600;
             text-decoration: none;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
             cursor: pointer;
             border: none;
             font-family: inherit;
         }
         .apple-btn-primary {
-            background: var(--apple-blue);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+            background: var(--fb-blue);
+            color: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .apple-btn-primary:hover {
-            background: var(--apple-blue-hover);
-            box-shadow: 0 4px 16px rgba(0, 113, 227, 0.4);
+            background: var(--fb-blue-hover);
+            box-shadow: 0 4px 12px rgba(24,119,242,0.3);
             transform: translateY(-1px);
         }
         .apple-btn-secondary {
-            background: rgba(0,0,0,0.06);
-            color: var(--apple-blue);
+            background: #E4E6EB;
+            color: var(--fb-dark);
         }
         .apple-btn-secondary:hover {
-            background: rgba(0,0,0,0.1);
+            background: #D8DADF;
         }
         .apple-btn-outline {
             background: transparent;
-            color: var(--apple-blue);
-            border: 1.5px solid var(--apple-blue);
+            color: var(--fb-blue);
+            border: 1.5px solid var(--fb-blue);
         }
         .apple-btn-outline:hover {
-            background: var(--apple-blue);
-            color: #fff;
+            background: rgba(24,119,242,0.06);
         }
         .apple-btn svg {
             width: 16px;
@@ -259,18 +314,16 @@
         .apple-btn:hover svg {
             transform: translateX(2px);
         }
-
-        /* Hero Quick Links */
         .hero-quick {
-            margin-top: 48px;
+            margin-top: 40px;
             display: flex;
             justify-content: center;
-            gap: 32px;
+            gap: 28px;
             flex-wrap: wrap;
         }
         .hero-quick a {
             text-decoration: none;
-            color: var(--apple-gray);
+            color: var(--fb-gray);
             font-size: 0.82rem;
             font-weight: 500;
             display: flex;
@@ -279,184 +332,255 @@
             transition: color 0.2s;
         }
         .hero-quick a:hover {
-            color: var(--apple-blue);
+            color: var(--fb-blue);
         }
         .hero-quick a svg {
             width: 14px;
             height: 14px;
         }
 
-        /* ====== PRODUCT SECTIONS (Apple-style) ====== */
+        /* ====== PRODUCT SECTIONS ====== */
         .product-section {
-            padding: 100px 24px;
+            padding: 80px 24px;
             text-align: center;
-            position: relative;
+            background: #FFFFFF;
         }
         .product-section:nth-child(even) {
-            background: var(--apple-light-gray);
+            background: var(--fb-bg);
         }
         .product-section-inner {
-            max-width: var(--max-width-wide);
+            max-width: var(--max-width);
             margin: 0 auto;
         }
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
         .product-overline {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: var(--apple-blue);
+            color: var(--fb-blue);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             margin-bottom: 8px;
         }
         .product-title {
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
             font-weight: 700;
             letter-spacing: -0.03em;
-            line-height: 1.1;
-            color: var(--apple-dark);
+            line-height: 1.2;
+            color: var(--fb-dark);
             margin-bottom: 12px;
         }
         .product-subtitle {
-            font-size: clamp(1rem, 1.6vw, 1.15rem);
-            color: var(--apple-gray);
-            max-width: 520px;
-            margin: 0 auto 50px;
-            line-height: 1.5;
+            font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+            color: var(--fb-gray);
+            max-width: 560px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+        .see-all {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--fb-blue);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .see-all:hover {
+            text-decoration: underline;
         }
 
-        /* Feature Cards — Apple Bento Grid */
+        /* Bento Grid */
         .bento-grid {
             display: grid;
             gap: 16px;
-            max-width: var(--max-width-wide);
+            max-width: var(--max-width);
             margin: 0 auto;
         }
         .bento-grid-3 {
             grid-template-columns: repeat(3, 1fr);
         }
-        .bento-grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
         .bento-card {
-            background: var(--apple-card);
-            border-radius: var(--apple-radius);
-            padding: 40px 32px;
+            background: var(--fb-card);
+            border-radius: var(--fb-radius);
+            padding: 28px 24px;
             text-align: left;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--fb-shadow);
         }
         .bento-card:hover {
             transform: translateY(-2px);
-            box-shadow: var(--apple-shadow-lg);
+            box-shadow: var(--fb-shadow-lg);
+            border-color: rgba(0,0,0,0.1);
         }
         .bento-card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--apple-radius-sm);
+            width: 44px;
+            height: 44px;
+            border-radius: var(--fb-radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 18px;
-            font-size: 1.5rem;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
         }
-        .bento-card-icon.blue { background: rgba(0, 113, 227, 0.1); color: var(--apple-blue); }
-        .bento-card-icon.green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
-        .bento-card-icon.orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-        .bento-card-icon.purple { background: rgba(175, 82, 222, 0.1); color: #af52de; }
-        .bento-card-icon.red { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
-        .bento-card-icon.teal { background: rgba(90, 200, 250, 0.1); color: #5ac8fa; }
+        .bento-card-icon.blue { background: rgba(24,119,242,0.1); color: var(--fb-blue); }
+        .bento-card-icon.green { background: rgba(69,189,98,0.1); color: #45BD62; }
+        .bento-card-icon.orange { background: rgba(247,152,29,0.1); color: #F7981D; }
+        .bento-card-icon.purple { background: rgba(168,91,205,0.1); color: #A85BCD; }
+        .bento-card-icon.red { background: rgba(240,72,62,0.1); color: #F0483E; }
+        .bento-card-icon.teal { background: rgba(54,190,220,0.1); color: #36BEDC; }
 
         .bento-card h3 {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 600;
             letter-spacing: -0.01em;
-            margin-bottom: 8px;
-            color: var(--apple-dark);
+            margin-bottom: 6px;
+            color: var(--fb-dark);
         }
         .bento-card p {
-            font-size: 0.92rem;
-            color: var(--apple-gray);
-            line-height: 1.55;
+            font-size: 0.88rem;
+            color: var(--fb-gray);
+            line-height: 1.5;
+            margin-bottom: 12px;
         }
-        .bento-card.span-2 {
-            grid-column: span 2;
+        .card-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--fb-blue);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .card-link:hover {
+            text-decoration: underline;
         }
 
         /* ====== MARKETPLACE SECTION ====== */
         .marketplace-section {
-            background: var(--apple-dark);
-            color: #fff;
-            padding: 120px 24px;
+            background: #1C1E21;
+            color: #FFFFFF;
+            padding: 100px 24px;
             text-align: center;
         }
         .marketplace-section .product-overline {
-            color: #2997ff;
+            color: #2997FF;
         }
         .marketplace-section .product-title {
-            color: #f5f5f7;
+            color: #F5F5F7;
         }
         .marketplace-section .product-subtitle {
-            color: #86868b;
+            color: #86868B;
+        }
+        .marketplace-section .see-all {
+            color: #2997FF;
         }
         .marketplace-features {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            max-width: var(--max-width-wide);
-            margin: 0 auto 50px;
+            max-width: var(--max-width);
+            margin: 0 auto 40px;
         }
         .marketplace-card {
             background: rgba(255,255,255,0.05);
             border: 0.5px solid rgba(255,255,255,0.1);
-            border-radius: var(--apple-radius);
-            padding: 36px 28px;
+            border-radius: var(--fb-radius);
+            padding: 28px 24px;
             text-align: left;
-            transition: background 0.3s ease, transform 0.3s ease;
+            transition: background 0.2s ease, transform 0.2s ease;
         }
         .marketplace-card:hover {
             background: rgba(255,255,255,0.08);
             transform: translateY(-2px);
         }
         .marketplace-card h3 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #f5f5f7;
+            margin-bottom: 6px;
+            color: #F5F5F7;
         }
         .marketplace-card p {
-            font-size: 0.9rem;
-            color: #86868b;
+            font-size: 0.85rem;
+            color: #86868B;
             line-height: 1.5;
         }
         .marketplace-card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: var(--apple-radius-sm);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--fb-radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
-            font-size: 1.3rem;
-            background: rgba(41, 151, 255, 0.12);
+            margin-bottom: 14px;
+            font-size: 1.2rem;
+            background: rgba(41,151,255,0.12);
+        }
+
+        /* ====== TESTIMONIALS SECTION ====== */
+        .testimonials-section {
+            padding: 80px 24px;
+            background: #FFFFFF;
+            text-align: center;
+        }
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        .testimonial-card {
+            background: var(--fb-bg);
+            border-radius: var(--fb-radius);
+            padding: 24px;
+            text-align: left;
+        }
+        .testimonial-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--fb-blue);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .testimonial-text {
+            font-size: 0.9rem;
+            color: var(--fb-dark);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        .testimonial-author {
+            font-size: 0.8rem;
+            color: var(--fb-gray);
+            font-weight: 600;
         }
 
         /* ====== CTA SECTION ====== */
         .cta-section {
-            padding: 120px 24px;
+            padding: 80px 24px;
             text-align: center;
-            background: var(--apple-light-gray);
+            background: var(--fb-bg);
         }
         .cta-section h2 {
-            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
             font-weight: 700;
             letter-spacing: -0.03em;
-            color: var(--apple-dark);
-            margin-bottom: 14px;
+            color: var(--fb-dark);
+            margin-bottom: 12px;
         }
         .cta-section p {
-            font-size: 1.1rem;
-            color: var(--apple-gray);
-            margin-bottom: 32px;
+            font-size: 1rem;
+            color: var(--fb-gray);
+            margin-bottom: 28px;
             max-width: 480px;
             margin-left: auto;
             margin-right: auto;
@@ -470,8 +594,8 @@
 
         /* ====== FOOTER ====== */
         .footer {
-            background: var(--apple-light-gray);
-            border-top: 0.5px solid var(--apple-border);
+            background: #FFFFFF;
+            border-top: 1px solid var(--fb-border);
             padding: 20px 24px;
         }
         .footer-inner {
@@ -485,7 +609,7 @@
         }
         .footer-left {
             font-size: 0.78rem;
-            color: var(--apple-gray);
+            color: var(--fb-gray);
         }
         .footer-links {
             display: flex;
@@ -493,12 +617,12 @@
         }
         .footer-links a {
             font-size: 0.78rem;
-            color: var(--apple-gray);
+            color: var(--fb-gray);
             text-decoration: none;
             transition: color 0.2s;
         }
         .footer-links a:hover {
-            color: var(--apple-dark);
+            color: var(--fb-dark);
         }
 
         /* ====== ANIMATIONS ====== */
@@ -514,40 +638,39 @@
 
         /* ====== RESPONSIVE ====== */
         @media (max-width: 768px) {
-            .nav-links { gap: 2px; }
-            .nav-links a { padding: 5px 10px; font-size: 0.78rem; }
+            .nav-inner {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 8px 16px;
+            }
+            .nav-search {
+                order: 3;
+                flex-basis: 100%;
+                max-width: 100%;
+            }
             .bento-grid-3,
-            .marketplace-features {
-                grid-template-columns: 1fr;
-            }
-            .bento-card.span-2 {
-                grid-column: span 1;
-            }
-            .bento-grid-2 {
+            .marketplace-features,
+            .testimonials-grid {
                 grid-template-columns: 1fr;
             }
             .hero h1 {
-                font-size: 2.4rem;
+                font-size: 2rem;
             }
-            .hero-quick {
-                gap: 20px;
+            .hero-stats {
+                gap: 16px;
             }
-            .product-section {
-                padding: 70px 20px;
-            }
-            .marketplace-section {
-                padding: 80px 20px;
-            }
-            .cta-section {
-                padding: 80px 20px;
-            }
-            .footer-inner {
+            .section-header {
                 flex-direction: column;
+                align-items: center;
                 text-align: center;
+            }
+            .see-all {
+                margin-top: 8px;
             }
         }
         @media (max-width: 480px) {
-            .hero-actions {
+            .hero-actions,
+            .cta-buttons {
                 flex-direction: column;
                 align-items: center;
             }
@@ -556,9 +679,9 @@
                 max-width: 300px;
                 justify-content: center;
             }
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
+            .nav-links a {
+                padding: 6px 12px;
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -576,37 +699,50 @@
             <a href="/" class="nav-brand">
                 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+                        <linearGradient id="peGold" x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0%" stop-color="#f7e27a"/>
                             <stop offset="50%" stop-color="#d4af37"/>
                             <stop offset="100%" stop-color="#a67c00"/>
                         </linearGradient>
                     </defs>
-                    <path d="M30 130 Q100 170 170 130" fill="none" stroke="url(#gold)" stroke-width="4"/>
-                    <rect x="85" y="60" width="30" height="70" fill="url(#gold)" rx="2"/>
-                    <rect x="45" y="85" width="28" height="45" fill="url(#gold)" rx="2"/>
-                    <polygon points="45,85 59,70 73,85" fill="url(#gold)"/>
-                    <rect x="127" y="80" width="32" height="50" fill="url(#gold)" rx="2"/>
-                    <path d="M90 50 L100 35 L110 50 L120 40 L115 55 L85 55 L80 40 Z" fill="url(#gold)"/>
-                    <rect x="92" y="75" width="6" height="6" fill="#fff" opacity="0.6"/>
-                    <rect x="92" y="90" width="6" height="6" fill="#fff" opacity="0.6"/>
+                    <rect x="10" y="10" width="86" height="180" rx="8" fill="url(#peGold)"/>
+                    <rect x="104" y="10" width="86" height="180" rx="8" fill="url(#peGold)"/>
+                    <text x="18" y="150" font-family="Arial Black,sans-serif" font-size="140" font-weight="900" fill="#1a1a2e">P</text>
+                    <text x="112" y="150" font-family="Arial Black,sans-serif" font-size="140" font-weight="900" fill="#1a1a2e">E</text>
                 </svg>
                 PropertyEmpire
             </a>
+            <div class="nav-search">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="20" y2="20"/></svg>
+                <input type="search" placeholder="Search properties...">
+            </div>
             <ul class="nav-links">
-                <li><a href="{% url 'marketplace:home' %}" class="nav-marketplace">Marketplace</a></li>
                 <li><a href="{% url 'login' %}" class="nav-signin">Sign In</a></li>
                 <li><a href="{% url 'register' %}" class="nav-cta">Get Started</a></li>
             </ul>
         </div>
     </nav>
 
-    <!-- Hero -->
+    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-inner">
-            <span class="hero-overline">All-in-one property platform</span>
-            <h1>Manage properties.<br>Run guesthouses.<br><span class="hero-gradient">Find your next home.</span></h1>
-            <p>One platform for landlords, guesthouse owners, and tenants. Track rent, manage rooms, list properties on the marketplace — everything in one place.</p>
+            <span class="hero-overline">Rental Property Management</span>
+            <h1>Manage your rentals.<br><span class="hero-gradient">Grow your portfolio.</span></h1>
+            <p>One powerful platform for landlords and property managers. Track tenants, rent payments, maintenance issues, and list vacancies — all in one place.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-number">2,500+</div>
+                    <div class="hero-stat-label">Properties Managed</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-number">4.8/5</div>
+                    <div class="hero-stat-label">Average Rating</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-number">1,200+</div>
+                    <div class="hero-stat-label">Active Landlords</div>
+                </div>
+            </div>
             <div class="hero-actions">
                 <a href="{% url 'register' %}" class="apple-btn apple-btn-primary">
                     Get Started Free
@@ -615,34 +751,35 @@
                 <a href="{% url 'login' %}" class="apple-btn apple-btn-secondary">
                     Sign In
                 </a>
-                <a href="{% url 'marketplace:home' %}" class="apple-btn apple-btn-outline">
-                    Browse Marketplace
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
-                </a>
             </div>
             <div class="hero-quick">
-                <a href="#rental">
-                    Rental Management
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
-                </a>
-                <a href="#guesthouse">
-                    Guesthouse Operations
+                <a href="#features">
+                    Features
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
                 </a>
                 <a href="#marketplace">
-                    Property Marketplace
+                    Marketplace
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
+                </a>
+                <a href="#testimonials">
+                    Testimonials
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Rental Property Management -->
-    <section id="rental" class="product-section">
+    <!-- Features Section -->
+    <section id="features" class="product-section">
         <div class="product-section-inner">
-            <div class="product-overline fade-up">Rental Properties</div>
-            <h2 class="product-title fade-up">Property management<br>that just works.</h2>
-            <p class="product-subtitle fade-up">Track houses, flats, tenants, and payments in a clean dashboard. No spreadsheets needed.</p>
+            <div class="section-header">
+                <div>
+                    <div class="product-overline">Powerful Tools</div>
+                    <h2 class="product-title">Everything you need to<br>manage rentals.</h2>
+                </div>
+                <a href="#" class="see-all">See all features →</a>
+            </div>
+            <p class="product-subtitle">From tenant screening to financial reports, our suite of tools simplifies every aspect of rental management.</p>
 
             <div class="bento-grid bento-grid-3">
                 <div class="bento-card fade-up">
@@ -651,105 +788,47 @@
                     </div>
                     <h3>Property Tracking</h3>
                     <p>Manage buildings, houses, and flats in one dashboard. Keep detailed records of every property in your portfolio.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
-
                 <div class="bento-card fade-up">
                     <div class="bento-card-icon green">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
                     <h3>Tenant Management</h3>
                     <p>Track tenant information, lease dates, contact details, and complete payment history for every lease.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
-
                 <div class="bento-card fade-up">
                     <div class="bento-card-icon orange">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
                     <h3>Payment Tracking</h3>
                     <p>Log rent payments, track arrears, and monitor payment history for each tenant. Always know who's paid.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
-
                 <div class="bento-card fade-up">
                     <div class="bento-card-icon purple">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     </div>
                     <h3>SMS Reminders</h3>
                     <p>Automatically send rent reminders via SMS to keep tenants informed and reduce late payments.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
-
                 <div class="bento-card fade-up">
                     <div class="bento-card-icon red">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                     </div>
                     <h3>Issue Tracking</h3>
                     <p>Tenants report maintenance issues directly. Track progress from report to resolution in real time.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
-
                 <div class="bento-card fade-up">
                     <div class="bento-card-icon teal">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
                     </div>
                     <h3>Financial Reports</h3>
                     <p>Get insights on rental income, expenses, and outstanding balances. Make informed decisions with real data.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Guesthouse Management -->
-    <section id="guesthouse" class="product-section">
-        <div class="product-section-inner">
-            <div class="product-overline fade-up">Guesthouse Operations</div>
-            <h2 class="product-title fade-up">Run your guesthouse,<br>effortlessly.</h2>
-            <p class="product-subtitle fade-up">A complete operations platform built for small hotels, lodges, B&Bs, and guesthouses.</p>
-
-            <div class="bento-grid bento-grid-3">
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    </div>
-                    <h3>Rooms & Room Types</h3>
-                    <p>Define room types with nightly rates. Manage each room's status — available, occupied, cleaning, or out of service.</p>
-                </div>
-
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon green">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
-                    <h3>Guest Database</h3>
-                    <p>Keep a single source of truth for every guest — contact details, ID, stay history, and preferences for repeat visits.</p>
-                </div>
-
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon orange">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
-                    <h3>Bookings & Walk-Ins</h3>
-                    <p>Take future reservations and check in walk-in guests in seconds with a streamlined front-desk workflow.</p>
-                </div>
-
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon purple">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    </div>
-                    <h3>Payments & Invoices</h3>
-                    <p>Record cash, card, and mobile-money payments. Auto-generate invoices and track outstanding balances per booking.</p>
-                </div>
-
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon teal">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <h3>Real-Time Dashboard</h3>
-                    <p>See today's arrivals and departures, occupancy rate, revenue trends, and performance metrics on one screen.</p>
-                </div>
-
-                <div class="bento-card fade-up">
-                    <div class="bento-card-icon red">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    </div>
-                    <h3>Housekeeping & Maintenance</h3>
-                    <p>Schedule cleaning, track maintenance issues, and keep every room guest-ready with real-time status updates.</p>
+                    <a href="#" class="card-link">Explore →</a>
                 </div>
             </div>
         </div>
@@ -758,9 +837,14 @@
     <!-- Marketplace Section -->
     <section id="marketplace" class="marketplace-section">
         <div class="product-section-inner">
-            <div class="product-overline fade-up">Marketplace</div>
-            <h2 class="product-title fade-up">Find your next<br>property.</h2>
-            <p class="product-subtitle fade-up">Browse verified rental properties and guesthouses. Connect directly with owners. List your own properties for free.</p>
+            <div class="section-header">
+                <div>
+                    <div class="product-overline">Marketplace</div>
+                    <h2 class="product-title">Find your next<br>rental property.</h2>
+                </div>
+                <a href="#" class="see-all">Browse all listings →</a>
+            </div>
+            <p class="product-subtitle">Browse verified rental properties and connect directly with owners. List your vacancies for free.</p>
 
             <div class="marketplace-features">
                 <div class="marketplace-card fade-up">
@@ -770,15 +854,13 @@
                     <h3>Smart Search</h3>
                     <p>Search properties by location, price, type, and availability. Find exactly what you need, instantly.</p>
                 </div>
-
                 <div class="marketplace-card fade-up">
                     <div class="marketplace-card-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2997ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     </div>
                     <h3>Nearby Properties</h3>
-                    <p>Discover rental properties and guesthouses near you with location-based search and mapping.</p>
+                    <p>Discover rental properties near you with location-based search and mapping.</p>
                 </div>
-
                 <div class="marketplace-card fade-up">
                     <div class="marketplace-card-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2997ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -788,17 +870,48 @@
                 </div>
             </div>
 
-            <a href="{% url 'marketplace:home' %}" class="apple-btn apple-btn-primary" style="background: #2997ff; box-shadow: 0 2px 8px rgba(41, 151, 255, 0.3);">
-                Explore Marketplace
+            <a href="{% url 'register' %}" class="apple-btn apple-btn-primary" style="background: #2997ff; box-shadow: 0 2px 8px rgba(41, 151, 255, 0.3);">
+                Get Started Now
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
             </a>
         </div>
     </section>
 
-    <!-- CTA -->
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials-section">
+        <div class="product-section-inner">
+            <div class="section-header">
+                <div>
+                    <div class="product-overline">Testimonials</div>
+                    <h2 class="product-title">Trusted by landlords<br>across the country.</h2>
+                </div>
+            </div>
+            <p class="product-subtitle">Hear what our users say about managing their rentals with PropertyEmpire.</p>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card fade-up">
+                    <div class="testimonial-avatar">JM</div>
+                    <p class="testimonial-text">"PropertyEmpire has completely transformed how I manage my 20+ rental units. The payment tracking alone saves me hours every month."</p>
+                    <div class="testimonial-author">John M. — Landlord</div>
+                </div>
+                <div class="testimonial-card fade-up">
+                    <div class="testimonial-avatar">SL</div>
+                    <p class="testimonial-text">"The tenant management features are top-notch. I can easily track leases, send reminders, and handle maintenance requests all in one place."</p>
+                    <div class="testimonial-author">Sarah L. — Property Manager</div>
+                </div>
+                <div class="testimonial-card fade-up">
+                    <div class="testimonial-avatar">DK</div>
+                    <p class="testimonial-text">"The marketplace helped me fill my vacancies quickly. I listed a unit and had three qualified applicants within a week."</p>
+                    <div class="testimonial-author">David K. — Real Estate Investor</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
     <section class="cta-section">
-        <h2 class="fade-up">Ready to get started?</h2>
-        <p class="fade-up">Join PropertyEmpire and take control of your property business — whether you manage rentals, run a guesthouse, or both.</p>
+        <h2 class="fade-up">Ready to streamline<br>your rental business?</h2>
+        <p class="fade-up">Join PropertyEmpire and take control of your rental portfolio. Start free today — no credit card required.</p>
         <div class="cta-buttons fade-up">
             <a href="{% url 'register' %}" class="apple-btn apple-btn-primary">
                 Create Free Account
@@ -806,9 +919,6 @@
             </a>
             <a href="{% url 'login' %}" class="apple-btn apple-btn-outline">
                 Sign In
-            </a>
-            <a href="{% url 'marketplace:home' %}" class="apple-btn apple-btn-secondary">
-                Browse Marketplace
             </a>
         </div>
     </section>
@@ -818,7 +928,6 @@
         <div class="footer-inner">
             <span class="footer-left">&copy; {% now "Y" %} PropertyEmpire. All rights reserved.</span>
             <div class="footer-links">
-                <a href="{% url 'marketplace:home' %}">Marketplace</a>
                 <a href="{% url 'login' %}">Sign In</a>
                 <a href="{% url 'register' %}">Get Started</a>
             </div>

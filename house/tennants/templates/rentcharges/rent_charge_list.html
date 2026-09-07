@@ -126,9 +126,15 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'rent_charge_detail' charge.pk %}" class="btn-icon" title="View"></a>
-                            <a href="{% url 'rent_charge_edit' charge.pk %}" class="btn-icon" title="Edit"></a>
-                            <a href="{% url 'payment_add' %}" class="btn-icon" title="Record Payment" style="border-color: var(--success); color: var(--success);"></a>
+                            <a href="{% url 'rent_charge_detail' charge.pk %}" class="btn-icon" title="View">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </a>
+                            <a href="{% url 'rent_charge_edit' charge.pk %}" class="btn-icon" title="Edit">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5 L17 3z"/></svg>
+                            </a>
+                            <a href="{% url 'payment_add' %}" class="btn-icon" title="Record Payment" style="border-color: var(--success); color: var(--success);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+                            </a>
                         </div>
                     </td>
                 </tr>

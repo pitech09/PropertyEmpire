@@ -73,9 +73,27 @@
                     <td>{{ payment_request.created_at|date:"M d, Y H:i" }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'payment_request_detail' payment_request.pk %}" class="btn-icon" title="View">V</a>
-                            <a href="{% url 'payment_request_edit' payment_request.pk %}" class="btn-icon" title="Update Status">S</a>
+                            <a href="{% url 'payment_request_detail' payment_request.pk %}" class="btn-icon" title="View">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </a>
+                            <a href="{% url 'payment_request_edit' payment_request.pk %}" class="btn-icon" title="Update Status">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5 L17 3z"/></svg>
+                            </a>
                         </div>
+                        {% if payment_request.status == 'pending' %}
+                        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap;">
+                            <form method="post" action="{% url 'payment_request_approve' payment_request.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" class="btn btn-sm btn-primary" title="Verify and record this payment"> Verify</button>
+                            </form>
+                            <form method="post" action="{% url 'payment_request_reject' payment_request.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" class="btn btn-sm" style="border: 1px solid var(--border); color: var(--danger);" title="Reject this payment request">Reject</button>
+                            </form>
+                        </div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

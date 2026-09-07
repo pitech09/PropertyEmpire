@@ -162,8 +162,7 @@ class TwilioNotificationService:
         
         if success:
             rent_charge.reminder_sent = True
-            rent_charge.reminder_sent_at = timezone.now()
-            rent_charge.save(update_fields=['reminder_sent', 'reminder_sent_at'])
+            rent_charge.save(update_fields=['reminder_sent'])
             
             tenant.last_reminder_sent = timezone.now()
             tenant.save(update_fields=['last_reminder_sent'])

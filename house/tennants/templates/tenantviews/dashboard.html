@@ -31,13 +31,15 @@
 <!-- Quick Stats -->
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-card-icon"></div>
+        <div class="stat-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l6 2 6-2 6 2 6-2l-3-3-6 3z"/><path d="M3 11h18l1-5-1 5l-8-3 8-3z"/><circle cx="12" cy="14" r="1"/></svg>
+        </div>
         <div class="stat-value">M {{ tenant.rent }}</div>
         <div class="stat-label">Monthly Rent</div>
     </div>
     <div class="stat-card">
         <div class="stat-card-icon {% if balance > 0 %}danger{% else %}success{% endif %}">
-            {% if balance > 0 %}{% else %}{% endif %}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M6.5 14l-1 1-5 6-5 1z"/></svg>
         </div>
         <div class="stat-value" style="{% if balance > 0 %}color: var(--danger); background: none; -webkit-text-fill-color: var(--danger);{% endif %}">
             M {{ balance }}
@@ -45,12 +47,16 @@
         <div class="stat-label">Current Balance</div>
     </div>
     <div class="stat-card">
-        <div class="stat-card-icon success"></div>
+        <div class="stat-card-icon success">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="5" y="13" width="5" height="3"/></svg>
+        </div>
         <div class="stat-value">{{ payments.count }}</div>
         <div class="stat-label">Payments Made</div>
     </div>
     <div class="stat-card">
-        <div class="stat-card-icon info"></div>
+        <div class="stat-card-icon info">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v3h-18v3h18v3z"/><path d="M5 5h14v2h-14v2h14v2z"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        </div>
         <div class="stat-value">{{ issues.count }}</div>
         <div class="stat-label">Issues Reported</div>
     </div>
@@ -120,6 +126,8 @@
                             <span style="color: var(--text-secondary); font-size: 0.9rem;">
                                  Settled
                             </span>
+                        {% elif charge.id in pending_charge_ids %}
+                            <span class="badge badge-info">Pending Review</span>
                         {% else %}
                             <a href="{% url 'initiate_payment' charge.id %}" class="btn btn-sm btn-primary">
                                 Pay M{{ charge.amount_due }}
@@ -139,6 +147,55 @@
         <p>Your rent charges will appear here once they are created.</p>
     </div>
     {% endif %}
+<!-- My Payment Requests -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">My Payment Requests</h2>
+    </div>
+    {% if payment_requests %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Submitted</th>
+                    <th>For</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in payment_requests %}
+                <tr>
+                    <td>{{ req.created_at|date:"M d, Y" }}</td>
+                    <td>{{ req.rent_charge.get_month_display }} {{ req.rent_charge.year }}</td>
+                    <td style="font-weight: 600;">M {{ req.amount }}</td>
+                    <td>{{ req.get_payment_method_display }}</td>
+                    <td>{{ req.payment_reference|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if req.status == 'approved' %}badge-success{% elif req.status == 'rejected' %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ req.get_status_display }}
+                            {% if req.status == 'pending' %}· Awaiting landlord{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <h3>No payment requests yet</h3>
+        <p>When you submit a rent payment, it will appear here while your landlord verifies it.</p>
+    </div>
+    {% endif %}
+</div>
+
+
 </div>
 
 <!-- Payment History -->

@@ -23,7 +23,16 @@
     <div class="card-header">
         <h2 class="card-title">Payment Details</h2>
     </div>
-    
+
+    <div class="alert alert-info" style="margin: 1rem 1rem 0; display: flex; gap: 0.75rem; align-items: flex-start;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span style="font-size: 0.9rem;">
+            Submit your payment details below. Your landlord will <strong>verify the
+            payment</strong> before it is recorded — you can track its status under
+            "My Payment Requests" on your dashboard.
+        </span>
+    </div>
+
     {% if messages %}
     <div class="messages" style="padding: 1rem;">
         {% for message in messages %}

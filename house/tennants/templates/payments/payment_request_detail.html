@@ -13,7 +13,21 @@
 
 <div class="page-header">
     <h1 class="page-title">Payment <span>Request</span></h1>
-    <a href="{% url 'payment_request_edit' payment_request.pk %}" class="btn btn-primary">Update Status</a>
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        {% if payment_request.status == 'pending' %}
+        <form method="post" action="{% url 'payment_request_approve' payment_request.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-primary" title="Verify and record this payment"> Verify Payment</button>
+        </form>
+        <form method="post" action="{% url 'payment_request_reject' payment_request.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-secondary" style="color: var(--danger); border-color: var(--danger);" title="Reject this payment request"> Reject</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'payment_request_edit' payment_request.pk %}" class="btn btn-secondary">Update Status</a>
+    </div>
 </div>
 
 <div class="card">

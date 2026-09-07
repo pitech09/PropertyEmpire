@@ -3,6 +3,8 @@ import logging
 from django.conf import settings
 from django.core.mail import send_mail
 
+from tennants.models import Payment
+
 from tennants.services.sms import TwilioNotificationService
 
 logger = logging.getLogger(__name__)
@@ -170,3 +172,37 @@ def notify_tenant_issue_status(issue):
         logger.info("Tenant %s has no enabled SMS number for issue status", tenant.pk)
 
     _send_email_backup(subject, message, [tenant.email])
+def approve_payment_request(payment_request, user=None):
+    """Verify/approve a pending payment request.
+
+    Records the payment in the ledger (a :class:`Payment`), flips the request
+    status to "approved", and notifies the tenant.  Idempotent: already-approved
+    requests are left untouched and ``False`` is returned.
+    """
+    if payment_request.status == "approved":
+        return False
+
+    Payment.objects.get_or_create(
+        user=user,
+        tenant=payment_request.tenant,
+        rent_charge=payment_request.rent_charge,
+        amount=payment_request.amount,
+        payment_method=payment_request.payment_method,
+        payment_reference=payment_request.payment_reference,
+    )
+
+    payment_request.status = "approved"
+    payment_request.save(update_fields=["status"])
+    notify_tenant_payment_request_status(payment_request)
+    return True
+
+
+def reject_payment_request(payment_request, user=None):
+    """Reject a pending payment request and notify the tenant."""
+    if payment_request.status == "rejected":
+        return False
+
+    payment_request.status = "rejected"
+    payment_request.save(update_fields=["status"])
+    notify_tenant_payment_request_status(payment_request)
+    return True

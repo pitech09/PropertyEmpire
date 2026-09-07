@@ -1000,6 +1000,158 @@
                 font-size: 0.8rem;
             }
         }
+/* ============================================================
+   PROPERTY EMPIRE — REDESIGNED THEME (light, clean, card-based)
+   Redeclares the :root palette + overrides legacy neon rules so caution
+   entire app inherits a modern, Facebook-inspired look with zero markup
+   changes. Applied last so these rules win by source order.
+   ============================================================ */
+        :root {
+            --primary: #1877f2;            /* Facebook blue */
+            --primary-glow: rgba(24, 118, 242, 0.14);
+            --secondary: #0b5fe5;         /* deeper blue for accents */
+            --blue: #1877f2;
+            --dark: #f0f2f5;               /* page background — light gray */
+            --dark-elevated: #ffffff;       /* inputs / raised surfaces */
+            --dark-card: #ffffff;           /* card surface */
+            --dark-card-hover: #f7f8fa;     /* card/tile hover */
+            --text: #050505;
+            --text-secondary: #65676b;
+            --text-muted: #8a8d91;
+            --border: #e4e6eb;
+            --danger: #d93025;
+            --danger-hover: #b3271d;
+            --success: #1a8f4e;
+            --warning: #b45309;
+        }
+
+        /* System-native font stack for readability & consistency */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                'Helvetica Neue', Arial, sans-serif;
+        }
+        .main-content {
+            padding: 1.5rem 2rem;
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* Keep a whisper of blue in the background; drop the neon accents */
+        .bg-pattern::before { background: radial-gradient(circle, rgba(24,118,242,0.08) 0%, transparent 70%); }
+        .bg-pattern::after  { background: radial-gradient(circle, rgba(24,118,242,0.05) 0%, transparent 70%); }
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(24,118,242,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(24,118,242,0.035) 1px, transparent 1px);
+        }
+
+        /* Top nav — frosted white bar with clean separation */
+        .navbar {
+            background: rgba(255,255,255,0.88);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .navbar-nav {
+            background: #eef1f6;
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .nav-link { color: var(--text-secondary); font-weight: 500; }
+        .nav-link:hover { background: rgba(0,0,0,0.06); color: var(--text); }
+        .nav-link.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: 0 2px 8px var(--primary-glow); }
+        .brand-icon { background: var(--primary); box-shadow: 0 6px 14px var(--primary-glow); }
+        .brand-icon svg { fill: #fff; }
+        .brand-text span { color: var(--primary); }
+        .user-avatar { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; }
+        .user-name { color: var(--text-secondary); }
+        .user-badge { background: #fff; border-color: var(--border); }
+        .btn-logout { color: var(--danger); border-color: rgba(217,48,37,0.4); background: transparent; }
+        .btn-logout:hover { background: rgba(217,48,37,0.08); }
+
+        /* Buttons — solid primary, ghost secondary, clear press feedback */
+        .btn { border-radius: 8px; font-weight:  600; }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 16px var(--primary-glow); }
+        .btn-primary:hover { background: var(--secondary); transform: translateY(-1px); box-shadow:  0 10px 22px var(--primary-glow); }
+        .btn-primary:active { transform: translateY(1px) scale(0.99); }
+        .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #f0f2f5; border-color: var(--border); color: var(--primary); }
+        .btn-secondary:active { transform: translateY(1px) scale(0.99); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: var(--danger-hover); transform: translateY(-1px); }
+/* Cards — light surfaces, subtle borders, gentle elevation */
+        .card { background: var(--dark-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .card:hover { border-color: #d8dbe0; box-shadow: 0 8px 28px rgba(0,0,0,0.09); }
+        .card::before { display: none; }
+        .card-header { border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; padding-bottom: 1rem; }
+        .card-title { color: var(--text); font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+
+        /* Stats — clean cards with colored accent chips */
+        .stat-card { background: var(--dark-card); border: 1px solid var(--border);
+            border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .stat-card:hover { border-color: #d8dbe0; box-shadow: 0 10px 26px rgba(0,0,0,0.10); transform: translateY(-3px); }
+        .stat-card::after { display: none; }
+        .stat-value { font-family: inherit; font-size: 2.1rem; letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: var(--primary); }
+        .stat-label { color: var(--text-muted); font-weight: 600; }
+
+        /* Tables — padded rows, clear row separators */
+        .table-container { border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+        .table-container table { margin: 0; }
+        th { color: var(--text-secondary); background: #f7f8fa; font-weight: 600; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.05em; }
+        th, td { padding: 0.85rem 1rem; }
+        td { color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f7f8fa; }
+
+        /* Forms — consistent fields with clear focus ring */
+        .form-control { background: #fff; border-color: var(--border); border-radius: 8px; color: var(--text); }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .form-label { color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; }
+        select.form-control { color: var(--text); }
+
+        /* Alerts & badges — soft tints, WCAG-AA text */
+        .alert { border-radius: 8px; font-weight: 500; }
+        .alert-success { background: rgba(26,143,78,0.10); border-color: rgba(26,143,78,0.25); color: #0f6b3a; }
+        .alert-error   { background: rgba(217,48,37,0.10); border-color: rgba(217,48,37,0.25); color: var(--danger); }
+        .alert-warning  { background: rgba(180,83,9,0.10); border-color: rgba(180,83,9,0.28); color: var(--warning); }
+        .badge { font-weight: 600; }
+        .badge-success { background: rgba(26,143,78,0.12); border-color: rgba(26,143,78,0.25); color: #0f6b3a; }
+        .badge-warning { background: rgba(180,83,9,0.12); border-color: rgba(180,83,9,0.28); color: var(--warning); }
+        .badge-danger  { background: rgba(217,48,37,0.12); border-color: rgba(217,48,37,0.25); color: var(--danger); }
+        .badge-info     { background: rgba(24,118,242,0.12); border-color: rgba(24,118,242,0.25); color: var(--primary); }
+
+        /* Detail, breadcrumb, filters */
+        .detail-item { background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+        .detail-value { color: var(--text); }
+        .breadcrumb a:hover { color: var(--primary); }
+        .filter-bar, .filter-bar-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; }
+        .btn-icon { background: #fff; border-color: var(--border); color: var(--text-secondary); }
+        .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: #f0f6ff; }
+        .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* Empty states */
+        .empty-state-icon { color: var(--text-muted); opacity: 0.4; }
+        .empty-state h3 { color: var(--text-secondary); }
+
+        /* Modal */
+        .btn-help { background: #fff; border-color: var(--border); color: var(--text-secondary); }
+        .btn-help:hover { border-color: var(--primary); color: var(--primary); background: #f0f6ff; }
+        .help-modal-content { background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+        .help-modal-body { color: var(--text-secondary); }
+        .help-modal-body p strong { color: var(--text); }
+
+        /* Page header */
+        .page-title { color: var(--text); }
+        .page-header { margin-bottom: 1.5rem; }
+
+        /* Accessibility: consistent, visible focus + touch feedback */
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -1058,7 +1210,8 @@
                 <li><a href="{% url 'house_list' %}" class="nav-link {% if 'house' in request.resolver_match.url_name %}active{% endif %}">Houses</a></li>
                 <li><a href="{% url 'tenant_list' %}" class="nav-link {% if 'tenant' in request.resolver_match.url_name %}active{% endif %}">Tenants</a></li>
                 <li><a href="{% url 'rent_charge_list' %}" class="nav-link {% if 'rent_charge' in request.resolver_match.url_name %}active{% endif %}">Charges</a></li>
-                <li><a href="{% url 'payment_list' %}" class="nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">Payments</a></li>
+                <li><a href="{% url 'payment_list' %}" class="nav-link {% if 'payment' in request.resolver_match.url_name and 'payment_request' not in request.resolver_match.url_name %}active{% endif %}">Payments</a></li>
+                <li><a href="{% url 'payment_request_list' %}" class="nav-link {% if 'payment_request' in request.resolver_match.url_name %}active{% endif %}">Requests</a></li>
                 <li><a href="{% url 'expense_list' %}" class="nav-link {% if 'expense' in request.resolver_match.url_name %}active{% endif %}">Expenses</a></li>
                 <li><a href="{% url 'issue_list' %}" class="nav-link {% if 'issue' in request.resolver_match.url_name %}active{% endif %}">Issues</a></li>
                 <li><a href="{% url 'worker_register' %}" class="nav-link">Hire Workers</a></li>

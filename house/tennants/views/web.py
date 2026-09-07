@@ -49,6 +49,8 @@ from tennants.services.tenant_accounts import create_tenant_login_user, send_ten
 from tennants.services.payment_requests import (
     notify_tenant_issue_status,
     notify_tenant_payment_request_status,
+    approve_payment_request as service_approve_payment_request,
+    reject_payment_request as service_reject_payment_request,
 )
 from decimal import Decimal
 
@@ -915,6 +917,50 @@ class PaymentRequestUpdateViewWeb(LoginRequiredMixin, UpdateView):
 
         messages.success(self.request, "Payment request status updated successfully!")
         return response
+
+
+def _payment_request_base_queryset(request):
+    """Payment requests that belong to the current user's properties."""
+    return PaymentRequest.objects.filter(
+        tenant__house__user=request.user
+    ).select_related("tenant", "tenant__house", "rent_charge")
+
+
+@login_required
+def approve_payment_request(request, pk):
+    """Verify a tenant's payment request, recording it in the payment ledger."""
+    payment_request = get_object_or_404(_payment_request_base_queryset(request), pk=pk)
+    redirect_url = request.POST.get("next") or request.GET.get("next") or "payment_request_list"
+
+    if payment_request.status == "pending":
+        service_approve_payment_request(payment_request, user=request.user)
+        messages.success(
+            request,
+            f"Payment of M{payment_request.amount} by "
+            f"{payment_request.tenant.full_name} verified and recorded.",
+        )
+    else:
+        messages.info(request, "This payment request has already been reviewed.")
+
+    return redirect(redirect_url)
+
+
+@login_required
+def reject_payment_request(request, pk):
+    """Reject a tenant's payment request."""
+    payment_request = get_object_or_404(_payment_request_base_queryset(request), pk=pk)
+    redirect_url = request.POST.get("next") or request.GET.get("next") or "payment_request_list"
+
+    if payment_request.status == "pending":
+        service_reject_payment_request(payment_request, user=request.user)
+        messages.success(
+            request,
+            f"Payment request from {payment_request.tenant.full_name} rejected.",
+        )
+    else:
+        messages.info(request, "This payment request has already been reviewed.")
+
+    return redirect(redirect_url)
 
 
 class IssueListViewWeb(LoginRequiredMixin, ListView):

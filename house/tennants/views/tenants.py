@@ -29,6 +29,16 @@ def tenant_dashboard(request):
     payments = Payment.objects.filter(tenant=tenant).order_by("-paid_at")
     charges = RentCharge.objects.filter(tenant=tenant).order_by("-month")
     issues = Issue.objects.filter(tenant=tenant).order_by("-created_at")
+    payment_requests = (
+        PaymentRequest.objects.filter(tenant=tenant)
+        .select_related("rent_charge")
+        .order_by("-created_at")[:10]
+    )
+    pending_charge_ids = set(
+        PaymentRequest.objects.filter(tenant=tenant, status="pending").values_list(
+            "rent_charge_id", flat=True
+        )
+    )
 
     total_paid = sum(p.amount for p in payments)
     total_due = sum(c.amount_due for c in charges)
@@ -38,6 +48,8 @@ def tenant_dashboard(request):
         "payments": payments,
         "charges": charges,
         "issues": issues,
+        "payment_requests": payment_requests,
+        "pending_charge_ids": pending_charge_ids,
         "balance": total_due - total_paid,
     }
 
@@ -52,6 +64,16 @@ def initiate_payment(request, charge_id):
     
     charge = get_object_or_404(RentCharge, id=charge_id, tenant=tenant)
     
+    if PaymentRequest.objects.filter(
+        tenant=tenant, rent_charge=charge, status="pending"
+    ).exists():
+        messages.info(
+            request,
+            "You already have a payment awaiting landlord verification for this charge.",
+        )
+        return redirect("tenant_dashboard")
+
+
     if request.method == "POST":
         amount = request.POST.get("amount")
         payment_method = request.POST.get('payment_method')

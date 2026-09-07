@@ -420,6 +420,71 @@
     td { color: #222 !important; border-bottom: 1px solid #ddd !important; }
     .main-content { max-width: 100% !important; padding: 1rem !important; }
 }
+/* ============================================================
+           PROPERTY EMPIRE — UX theme overrides for the light redesign.
+           Flips hero / tiles / tabs / toasts from the legacy neon accents
+           tothe cohesive blue accent + neutral surfaces used across base.
+           ============================================================ */
+        .hero-banner {
+            background:
+                radial-gradient(120% 100% at 0% 0%, rgba(24,118,242,0.10) 0%, transparent 50%),
+                radial-gradient(120% 100% at 100% 100%, rgba(24,118,242,0.06) 0%, transparent 50%),
+                var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .hero-banner::after {
+            background-image:
+                linear-gradient(rgba(24,118,242,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(24,118,242,0.035) 1px, transparent 1px);
+            opacity: 0.7;
+        }
+        .hero-greeting { color: var(--primary); font-weight: 600; }
+        .hero-title { color: var(--text); }
+        .hero-illustration {
+            background: linear-gradient(135deg, rgba(24,118,242,0.16), rgba(24,118,242,0.05));
+            border: 1px solid rgba(24,118,242,0.14);
+        }
+        .hero-illustration { color: var(--primary); }
+
+        /* Stat & tile accents */
+        .stat-card-icon { background: rgba(24,118,242,0.12); color: var(--primary); }
+        .stat-card-icon.success { background: rgba(26,143,78,0.12); color: var(--success); }
+        .stat-card-icon.danger  { background: rgba(217,48,37,0.12); color: var(--danger); }
+        .stat-card-icon.info    { background: rgba(24,118,242,0.12); color: var(--primary); }
+        .stat-card-icon.warning { background: rgba(180,83,9,0.12); color: var(--warning); }
+        .stat-card .stat-trend { color: var(--text-muted); }
+
+        .action-tile { background: var(--dark-card); border: 1px solid var(--border); color: var(--text);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .action-tile:hover { transform: translateY(-2px);
+            border-color: #d8dbe0;
+            background: var(--dark-card-hover);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.10); }
+        .action-tile .tile-icon,
+        .action-tile.tile-blue .tile-icon,
+        .action-tile.tile-red .tile-icon,
+        .action-tile.tile-green .tile-icon,
+        .action-tile.tile-amber .tile-icon { background: rgba(24,118,242,0.12); color: var(--primary); }
+        .action-tile .tile-label { color: var(--text); }
+
+        /* Tabs — segmented control with white active text */
+        .tab-bar { background: #eef1f6; border: 1px solid var(--border); }
+        .tab-bar button { color: var(--text-secondary); font-weight: 500; }
+        .tab-bar button:hover { background: rgba(0,0,0,0.06); color: var(--text); }
+        .tab-bar button.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
+
+        /* Toasts — lighter elevation */
+        .toast { background: var(--dark-card); border: 1px solid var(--border);
+            border-left: 4px solid var(--primary); color: var(--text);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.14); }
+
+        /* Card / filter / meta / kpi surfaces — neutral, clean */
+        .filter-bar-card, .report-meta .meta-item, .kpi-box { background: #fff; border: 1px solid var(--border); }
+        .report-meta .meta-value, .kpi-box .kpi-value { color: var(--text); font-family: inherit;
+            font-variant-numeric: tabular-nums; }
+        .kpi-box .kpi-label, .report-meta .meta-label { color: var(--text-muted); }
 </style>
 
 <div class="toast-container" id="toast-container"></div>

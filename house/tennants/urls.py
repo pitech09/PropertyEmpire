@@ -3,8 +3,6 @@ from tennants.views.tenants import initiate_payment, report_issue, tenant_dashbo
 from tennants.views.web import (dashboard, BuildingListViewWeb, BuildingDetailViewWeb,
                     landlord_financial_dashboard, owner_dashboard,
                     reports, export_payments_csv, export_tenants_csv,
-                    update_location,
-
                     BuildingCreateViewWeb, BuildingUpdateViewWeb, BuildingDeleteViewWeb,
                     HouseListViewWeb, HouseDetailViewWeb,
                     HouseCreateViewWeb, HouseUpdateViewWeb, HouseDeleteViewWeb,
@@ -18,6 +16,7 @@ from tennants.views.web import (dashboard, BuildingListViewWeb, BuildingDetailVi
                     bulk_create_rent_charges, send_rent_reminders,
                     PaymentRequestListViewWeb, PaymentRequestDetailViewWeb,
                     PaymentRequestCreateViewWeb, PaymentRequestUpdateViewWeb,
+                    approve_payment_request, reject_payment_request,
                     IssueListViewWeb, IssueDetailViewWeb, IssueUpdateViewWeb,
                     expense_list, expense_create, expense_edit, expense_delete,
                     issue_bids, accept_bid, reject_bid)
@@ -57,9 +56,6 @@ urlpatterns = [
     path('reports/export/payments.csv', export_payments_csv, name='export_payments_csv'),
     path('reports/export/tenants.csv', export_tenants_csv, name='export_tenants_csv'),
 
-    # Property location update
-    path('update-location/', update_location, name='update_location'),
-
     # Buildings
 
     path('buildings/', BuildingListViewWeb.as_view(), name='building_list'),
@@ -97,6 +93,8 @@ urlpatterns = [
     path('payment-requests/add/', PaymentRequestCreateViewWeb.as_view(), name='payment_request_add'),
     path('payment-requests/<int:pk>/', PaymentRequestDetailViewWeb.as_view(), name='payment_request_detail'),
     path('payment-requests/<int:pk>/edit/', PaymentRequestUpdateViewWeb.as_view(), name='payment_request_edit'),
+    path('payment-requests/<int:pk>/approve/', approve_payment_request, name='payment_request_approve'),
+    path('payment-requests/<int:pk>/reject/', reject_payment_request, name='payment_request_reject'),
 
     # Rent Charges
     path('rent-charges/', RentChargeListViewWeb.as_view(), name='rent_charge_list'),
