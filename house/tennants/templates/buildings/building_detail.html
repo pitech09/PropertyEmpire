@@ -102,8 +102,8 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'house_detail' house.pk %}" class="btn-icon" title="View"></a>
-                            <a href="{% url 'house_edit' house.pk %}" class="btn-icon" title="Edit"></a>
+                            <a class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
+                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
                         </div>
                     </td>
                 </tr>

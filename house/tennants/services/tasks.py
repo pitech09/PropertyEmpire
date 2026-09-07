@@ -3,9 +3,17 @@ from django.utils import timezone
 from datetime import timedelta
 from tennants.models import RentCharge, Tenant
 from .sms import TwilioNotificationService
+from .rent_charges import generate_due_rent_charges
 import logging
 
 logger = logging.getLogger(__name__)
+
+@shared_task
+def generate_rent_charges():
+    """Daily task to auto-create RentCharges for tenants whose due date arrived."""
+    created = generate_due_rent_charges()
+    logger.info("Rent charge generation completed. Created: %s", len(created))
+    return f"Created {len(created)} rent charges"
 
 @shared_task
 def send_daily_rent_reminders():
@@ -13,12 +21,15 @@ def send_daily_rent_reminders():
     Daily task to check and send rent reminders
     Runs every day to check for upcoming rent due dates
     """
+    # Ensure charges exist for due dates that arrived today or earlier.
+    generate_rent_charges()
+
     notification_service = TwilioNotificationService()
     today = timezone.now().date()
     sent_count = 0
     
     # Get all active tenants
-    active_tenants = Tenant.objects.filter(is_active=True, sms_notifications_enabled=True)
+    active_tenants = Tenant.objects.filter(is_active=True, sms_notifications=True)
     
     for tenant in active_tenants:
         days_until_due = (tenant.rent_due_date - today).days
@@ -63,7 +74,7 @@ def send_overdue_notices():
     # Get rent charges that are overdue and unpaid
     overdue_charges = RentCharge.objects.filter(
         tenant__is_active=True,
-        tenant__sms_notifications_enabled=True,
+        tenant__sms_notifications=True,
         tenant__rent_due_date__lt=today
     ).exclude(
         balance__lte=0  # Exclude fully paid

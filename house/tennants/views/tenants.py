@@ -39,6 +39,14 @@ def tenant_dashboard(request):
             "rent_charge_id", flat=True
         )
     )
+    next_unpaid_charge = next(
+        (
+            c
+            for c in charges
+            if not c.is_paid and c.id not in pending_charge_ids
+        ),
+        None,
+    )
 
     total_paid = sum(p.amount for p in payments)
     total_due = sum(c.amount_due for c in charges)
@@ -50,6 +58,7 @@ def tenant_dashboard(request):
         "issues": issues,
         "payment_requests": payment_requests,
         "pending_charge_ids": pending_charge_ids,
+        "next_unpaid_charge": next_unpaid_charge,
         "balance": total_due - total_paid,
     }
 

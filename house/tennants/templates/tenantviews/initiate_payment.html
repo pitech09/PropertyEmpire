@@ -2,6 +2,19 @@
 
 {% block title %}Initiate Payment - PropertyEmpire{% endblock %}
 
+{% block extra_head %}
+    <style>
+        @media (max-width: 720px) {
+            .pay-grid { grid-template-columns: 1fr !important; }
+            .pay-grid .pay-summary {
+                border-right: none !important;
+                border-bottom: 1px solid var(--border);
+                border-radius: 12px 12px 0 0 !important;
+            }
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="breadcrumb">
     <a href="{% url 'tenant_dashboard' %}">Dashboard</a>
@@ -20,52 +33,89 @@
 </div>
 
 <div class="card">
-    <div class="card-header">
-        <h2 class="card-title">Payment Details</h2>
-    </div>
+    <div class="pay-grid" style="display: grid; grid-template-columns: 280px 1fr; gap: 0;">
+        <!-- Charge Summary -->
+        <div class="pay-summary" style="background: var(--surface-subtle, #f7f8fa); border-right: 1px solid var(--border); padding: 1.5rem; border-radius: 12px 0 0 12px;">
+            <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Paying for</div>
+            <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">
+                {{ charge.get_month_display }} {{ charge.year }} Rent
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Amount Due</div>
+                    <div style="font-weight: 600;">M {{ charge.amount_due }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Outstanding Balance</div>
+                    <div style="font-weight: 700; color: {% if charge.balance > 0 %}var(--danger){% else %}var(--success){% endif %};">M {{ charge.balance }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Unit</div>
+                    <div style="font-weight: 600;">{{ tenant.house|default:"-" }}{% if tenant.building_name %} · {{ tenant.building_name }}{% endif %}</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="alert alert-info" style="margin: 1rem 1rem 0; display: flex; gap: 0.75rem; align-items: flex-start;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span style="font-size: 0.9rem;">
-            Submit your payment details below. Your landlord will <strong>verify the
-            payment</strong> before it is recorded — you can track its status under
-            "My Payment Requests" on your dashboard.
-        </span>
-    </div>
+        <!-- Form -->
+        <div style="padding: 1.5rem;">
+            {% if messages %}
+            <div style="margin-bottom: 1rem;">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-    {% if messages %}
-    <div class="messages" style="padding: 1rem;">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" style="margin-bottom: 0.5rem; padding: 0.75rem; border-radius: 4px; {% if message.tags == 'error' %}background-color: #fee2e2; color: #991b1b;{% else %}background-color: #d1fae5; color: #065f46;{% endif %}">
-            {{ message }}
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_amount" class="form-label">Amount (M)</label>
+                    <input type="number" step="0.01" min="0.01" name="amount" id="id_amount" class="form-control" value="{{ charge.balance }}" required>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 0.3rem;">
+                        Full balance is pre-filled — you may pay a partial amount.
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="id_payment_method" class="form-label">Payment Method</label>
+                    <select name="payment_method" id="id_payment_method" class="form-control" required>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_reference" class="form-label">Payment Reference</label>
+                    <input type="text" name="reference" id="id_reference" class="form-control" placeholder="Transaction ID, cheque number, etc.">
+                    <small id="reference_hint" style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 0.3rem;">
+                        Required for Mobile Money, Bank Transfer and Cheque.
+                    </small>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1.25rem;">
+                    <a href="{% url 'tenant_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 6px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Submit for Verification
+                    </button>
+                </div>
+            </form>
         </div>
-        {% endfor %}
     </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="id_amount" class="form-label">Amount</label>
-            <input type="number" step="0.01" name="amount" id="id_amount" class="form-control" value="{{ charge.balance }}" required>
-        </div>
-        <div class="form-group">
-            <label for="id_payment_method" class="form-label">Payment Method</label>
-            <select name="payment_method" id="id_payment_method" class="form-control" required>
-                <option value="cash">Cash</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="cheque">Cheque</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="id_reference" class="form-label">Payment Reference (Required for non-cash)</label>
-            <input type="text" name="reference" id="id_reference" class="form-control" placeholder="Transaction ID, Check Number, etc.">
-        </div>
-        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap;">
-            <a href="{% url 'tenant_dashboard' %}" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Submit Payment</button>
-        </div>
-    </form>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var method = document.getElementById("id_payment_method");
+        var ref = document.getElementById("id_reference");
+        if (!method || !ref) return;
+        function sync() {
+            ref.required = method.value !== "cash";
+        }
+        method.addEventListener("change", sync);
+        sync();
+    })();
+</script>
 {% endblock %}

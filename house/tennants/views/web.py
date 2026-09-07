@@ -18,6 +18,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.cache import cache
+from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField
+from django.db.models.functions import Coalesce, Greatest
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import permission_classes
 
@@ -74,7 +76,18 @@ def _landlord_financials(user):
     # Income
     total_collected = _money(payments.aggregate(total=Sum("amount"))["total"])
     total_billed = _money(charges.aggregate(total=Sum("amount_due"))["total"])
-    total_outstanding = sum((charge.balance for charge in charges), Decimal("0.00"))
+
+    # Outstanding computed in SQL (avoids the N+1 from RentCharge.total_paid)
+    # and clamped at zero so overpayments don't mask arrears on other charges.
+    zero = Value(Decimal("0.00"), output_field=DecimalField(max_digits=10, decimal_places=2))
+    charges = charges.annotate(
+        paid_total=Coalesce(Sum("payments__amount"), zero),
+        outstanding_balance=ExpressionWrapper(
+            Greatest(F("amount_due") - Coalesce(Sum("payments__amount"), zero), zero),
+            output_field=DecimalField(max_digits=10, decimal_places=2),
+        ),
+    )
+    total_outstanding = _money(charges.aggregate(total=Sum("outstanding_balance"))["total"])
     expected_monthly_rent = sum((tenant.rent for tenant in active_tenants), Decimal("0.00"))
     collection_rate = round((total_collected / total_billed * 100), 1) if total_billed else 0
 
@@ -87,12 +100,25 @@ def _landlord_financials(user):
     effective_expenses = total_expenses - unrecovered_expenses
     net_income = total_collected - effective_expenses
 
-    # Platform fees
+    # Platform fees. The subscription is a monthly cost, so the "net after
+    # fees" figure is computed against the current month's collections rather
+    # than all-time collections (which would understate fees for any landlord
+    # with more than one month of history).
     platform_fee = total_collected * settings.PLATFORM_TRANSACTION_FEE_RATE
     monthly_sub = settings.LANDLORD_MONTHLY_SUBSCRIPTION
+    now = timezone.now()
+    collected_this_month = _money(
+        payments.filter(paid_at__year=now.year, paid_at__month=now.month)
+        .aggregate(total=Sum("amount"))["total"]
+    )
+    platform_fee_this_month = collected_this_month * settings.PLATFORM_TRANSACTION_FEE_RATE
 
-    # Security deposits held
-    total_deposits_held = _money(houses.aggregate(total=Sum("deposit_amount"))["total"])
+    # Security deposits held — only for houses with active tenants
+    # (a vacant house's deposit has been refunded and must not be counted)
+    occupied_houses = houses.filter(tenants__is_active=True).distinct()
+    total_deposits_held = _money(
+        occupied_houses.aggregate(total=Sum("deposit_amount"))["total"]
+    )
 
     # Pending
     pending_payment_requests = PaymentRequest.objects.filter(
@@ -115,11 +141,13 @@ def _landlord_financials(user):
         "net_income": net_income,
         # Deposits
         "total_deposits_held": total_deposits_held,
-        "deposit_count": houses.filter(deposit_amount__gt=0).count(),
+        "deposit_count": occupied_houses.filter(deposit_amount__gt=0).count(),
         # Platform
         "platform_fee": platform_fee,
+        "collected_this_month": collected_this_month,
+        "platform_fee_this_month": platform_fee_this_month,
         "monthly_subscription": monthly_sub,
-        "net_after_fees_platform": total_collected - platform_fee - monthly_sub,
+        "net_after_fees_platform": collected_this_month - platform_fee_this_month - monthly_sub,
         # Pending
         "pending_recoverable_count": pending_recoverable_count,
         "pending_payment_requests": pending_payment_requests,
@@ -135,22 +163,37 @@ def _landlord_building_financials(user):
     rows = []
     buildings = FlatBuilding.objects.filter(user=user).prefetch_related("houses")
     from tennants.models import Expense
-    from django.db.models import Sum
+    from django.db.models import Sum, Q
 
     for building in buildings:
         payments = Payment.objects.filter(tenant__house__flat_building=building)
-        charges = RentCharge.objects.filter(tenant__house__flat_building=building).select_related("tenant")
+        zero = Value(Decimal("0.00"), output_field=DecimalField(max_digits=10, decimal_places=2))
+        charges = RentCharge.objects.filter(tenant__house__flat_building=building).annotate(
+            outstanding_balance=ExpressionWrapper(
+                Greatest(F("amount_due") - Coalesce(Sum("payments__amount"), zero), zero),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )
         active_tenants = Tenant.objects.filter(house__flat_building=building, is_active=True)
         collected = _money(payments.aggregate(total=Sum("amount"))["total"])
         billed = _money(charges.aggregate(total=Sum("amount_due"))["total"])
-        outstanding = sum((charge.balance for charge in charges), Decimal("0.00"))
+        outstanding = _money(charges.aggregate(total=Sum("outstanding_balance"))["total"])
         expected_rent = sum((tenant.rent for tenant in active_tenants), Decimal("0.00"))
 
-        # Expense tracking per building
+        # Expense tracking per building (consistent with the top-level logic:
+        # only expenses that will NOT be recovered reduce net income).
+        # Expenses can be attached to the building directly, to a house in the
+        # building, or to a tenant of the building — all three count here so
+        # building rows reconcile with the top-level totals.
+        expense_scope = Q(flat_building=building) | Q(house__flat_building=building) | Q(tenant__house__flat_building=building)
         total_expenses = _money(
-            Expense.objects.filter(user=user, flat_building=building).aggregate(total=Sum("amount"))["total"]
+            Expense.objects.filter(Q(user=user) & expense_scope).aggregate(total=Sum("amount"))["total"]
         )
-        net_income = collected - total_expenses
+        unrecovered_expenses = _money(
+            Expense.objects.filter(Q(user=user) & expense_scope, is_recoverable=True, is_recovered=False)
+            .aggregate(total=Sum("amount"))["total"]
+        )
+        net_income = collected - (total_expenses - unrecovered_expenses)
 
         rows.append({
             "building": building,
@@ -197,9 +240,10 @@ def dashboard(request):
     occupied_houses = House.objects.filter(user=request.user, occupation=True).count()
     active_tenants = Tenant.objects.filter(house__user=request.user, is_active=True).count()
     
-    # Recent payments (last 5)
+    # Recent payments (last 5) — scoped via the tenant/house chain so payments
+    # saved without a `user` are still attributed to the right landlord.
     recent_payments = Payment.objects.filter(
-        user=request.user
+        tenant__house__user=request.user
     ).order_by('-paid_at')[:5]
 
     unpaid_charges = [
@@ -446,16 +490,35 @@ def landlord_financial_dashboard(request):
     recent_payments = Payment.objects.filter(
         tenant__house__user=request.user
     ).select_related("tenant", "tenant__house", "rent_charge").order_by("-paid_at")[:10]
-    unpaid_charges = [
-        charge for charge in RentCharge.objects.filter(
-            tenant__house__user=request.user
-        ).select_related("tenant", "tenant__house").order_by("-year", "-month")
-        if charge.balance > 0
-    ][:10]
+
+    # Unpaid charges filtered in SQL (annotated balance) instead of evaluating
+    # the per-instance `balance` property, which ran 2 queries per charge.
+    unpaid_charges = (
+        RentCharge.objects.filter(tenant__house__user=request.user)
+        .select_related("tenant", "tenant__house")
+        .annotate(
+            paid_total=Coalesce(
+                Sum("payments__amount"),
+                Value(Decimal("0.00")),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+            balance_annot=ExpressionWrapper(
+                F("amount_due") - Coalesce(
+                    Sum("payments__amount"),
+                    Value(Decimal("0.00")),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
+                ),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+        )
+        .filter(amount_due__gt=F("paid_total"))
+        .order_by("-year", "-month")[:10]
+    )
 
     context = {
         **financials,
         "transaction_fee_rate": settings.PLATFORM_TRANSACTION_FEE_RATE,
+        "transaction_fee_rate_percent": settings.PLATFORM_TRANSACTION_FEE_RATE * 100,
         "monthly_subscription": settings.LANDLORD_MONTHLY_SUBSCRIPTION,
         "building_financials": _landlord_building_financials(request.user),
         "recent_payments": recent_payments,

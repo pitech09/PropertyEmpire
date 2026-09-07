@@ -89,16 +89,24 @@
     </div>
     <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
         <div class="stat-card">
-            <div class="stat-value">M{{ platform_fee|floatformat:2 }}</div>
-            <div class="stat-label">Transaction Fees ({{ transaction_fee_rate|floatformat:2 }}%)</div>
+            <div class="stat-value">M{{ collected_this_month|floatformat:2 }}</div>
+            <div class="stat-label">Collected This Month</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">M{{ platform_fee_this_month|floatformat:2 }}</div>
+            <div class="stat-label">Transaction Fees ({{ transaction_fee_rate_percent }}%)</div>
         </div>
         <div class="stat-card">
             <div class="stat-value">M{{ monthly_subscription|floatformat:2 }}</div>
             <div class="stat-label">Monthly Subscription</div>
         </div>
         <div class="stat-card">
+            <div class="stat-value">M{{ platform_fee|floatformat:2 }}</div>
+            <div class="stat-label">Transaction Fees (All Time)</div>
+        </div>
+        <div class="stat-card">
             <div class="stat-value">M{{ net_after_fees_platform|floatformat:2 }}</div>
-            <div class="stat-label">Net After All Fees</div>
+            <div class="stat-label">Net After Fees (This Month)</div>
         </div>
     </div>
 </div>
@@ -116,14 +124,6 @@
         <div class="stat-card">
             <div class="stat-value">{{ pending_recoverable_count }}</div>
             <div class="stat-label">Unrecovered Expenses</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ pending_inquiries|length }}</div>
-            <div class="stat-label">Pending Inquiries</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ accepted_inquiries|length }}</div>
-            <div class="stat-label">Accepted (Awaiting Payment)</div>
         </div>
     </div>
 </div>
@@ -233,7 +233,7 @@
                     <td>{{ charge.tenant.house.house_number|default:"-" }}</td>
                     <td>{{ charge.get_month_display }} {{ charge.year }}</td>
                     <td>M{{ charge.amount_due|floatformat:2 }}</td>
-                    <td style="color: var(--danger);">M{{ charge.balance|floatformat:2 }}</td>
+                    <td style="color: var(--danger);">M{{ charge.balance_annot|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

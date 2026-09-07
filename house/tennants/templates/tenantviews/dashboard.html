@@ -21,8 +21,14 @@
                 No unit assigned yet — please contact your landlord.
             {% endif %}
         </p>
-        <div class="hero-actions" style="margin-top: 1rem;">
-            <a href="{% url 'report_issue' %}" class="btn btn-primary"> Report Issue</a>
+        <div class="hero-actions" style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            {% if next_unpaid_charge %}
+            <a href="{% url 'initiate_payment' next_unpaid_charge.id %}" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 6px;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                Pay Rent
+            </a>
+            {% endif %}
+            <a href="{% url 'report_issue' %}" class="btn btn-secondary"> Report Issue</a>
         </div>
     </div>
     <div class="hero-illustration"></div>
@@ -94,6 +100,9 @@
 <div class="card">
     <div class="card-header">
         <h2 class="card-title"> Rent Charges</h2>
+        {% if next_unpaid_charge %}
+        <a href="{% url 'initiate_payment' next_unpaid_charge.id %}" class="btn btn-primary btn-sm">+ Make a Payment</a>
+        {% endif %}
     </div>
 
     {% if charges %}
@@ -151,6 +160,11 @@
 <div class="card">
     <div class="card-header">
         <h2 class="card-title">My Payment Requests</h2>
+        {% if pending_charge_ids %}
+        <span class="badge badge-warning">
+            {{ pending_charge_ids|length }} awaiting verification
+        </span>
+        {% endif %}
     </div>
     {% if payment_requests %}
     <div class="table-container">
@@ -193,9 +207,6 @@
         <p>When you submit a rent payment, it will appear here while your landlord verifies it.</p>
     </div>
     {% endif %}
-</div>
-
-
 </div>
 
 <!-- Payment History -->

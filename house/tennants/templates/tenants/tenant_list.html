@@ -112,9 +112,9 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'tenant_detail' tenant.pk %}" class="btn-icon" title="View Details"></a>
-                            <a href="{% url 'tenant_edit' tenant.pk %}" class="btn-icon" title="Edit"></a>
-                            <a href="{% url 'tenant_delete' tenant.pk %}" class="btn-icon danger" title="Delete"></a>
+                            <a class="btn-icon" title="View Details">{% include "_icons.html" with name="eye" %}</a>
+                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
+                            <a class="btn-icon danger" title="Delete">{% include "_icons.html" with name="trash" %}</a>
                         </div>
                     </td>
                 </tr>

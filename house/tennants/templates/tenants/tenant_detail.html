@@ -28,7 +28,7 @@
         <div class="stat-label">Status</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value" style="color: var(--accent-green);">{{ tenant.rent }}</div>
+        <div class="stat-value" style="color: var(--success);">{{ tenant.rent }}</div>
         <div class="stat-label">Monthly Rent (M)</div>
     </div>
     <div class="stat-card">
@@ -67,7 +67,7 @@
             <div class="detail-label">House</div>
             <div class="detail-value">
                 {% if tenant.house %}
-                <a href="{% url 'house_detail' tenant.house.pk %}" style="color: var(--accent-yellow); text-decoration: none;">
+                <a href="{% url 'house_detail' tenant.house.pk %}" style="color: var(--primary); text-decoration: none;">
                     {{ tenant.house.house_number }}
                 </a>
                 {% else %}
@@ -79,7 +79,7 @@
             <div class="detail-label">Building</div>
             <div class="detail-value">
                 {% if tenant.building_name %}
-                <a href="{% url 'building_detail' tenant.house.flat_building.pk %}" style="color: var(--primary-blue); text-decoration: none;">
+                <a href="{% url 'building_detail' tenant.house.flat_building.pk %}" style="color: var(--primary); text-decoration: none;">
                     {{ tenant.building_name }}
                 </a>
                 {% else %}
@@ -89,7 +89,7 @@
         </div>
         <div class="detail-item">
             <div class="detail-label">Building Address</div>
-            <div class="detail-value">{{ tenant.building_adress|default:"-" }}</div>
+            <div class="detail-value">{{ tenant.building_address|default:"-" }}</div>
         </div>
         <div class="detail-item">
             <div class="detail-label">Rent Due Date</div>
@@ -129,34 +129,26 @@
                     <th>Month/Year</th>
                     <th>Rent Amount</th>
                     <th>Amount Paid</th>
-                    <th>Balance</th>
+                    <th>Charge Balance</th>
                     <th>Method</th>
-                    <th>Status</th>
+                    <th>Reference</th>
                     <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 {% for payment in payments %}
                 <tr>
-                    <td style="color: var(--text-primary); font-weight: 500;">
-                        {{ payment.get_rent_month_display }} {{ payment.year }}
+                    <td style="color: var(--text); font-weight: 500;">
+                        {{ payment.rent_charge.get_month_display }} {{ payment.rent_charge.year }}
                     </td>
-                    <td>M {{ payment.rent_amount }}</td>
-                    <td style="color: var(--accent-green);">M {{ payment.amount_paid }}</td>
-                    <td style="color: {% if payment.balance > 0 %}var(--danger){% else %}var(--success){% endif %};">
-                        M {{ payment.balance }}
+                    <td>M {{ payment.rent_charge.amount_due }}</td>
+                    <td style="color: var(--success);">M {{ payment.amount }}</td>
+                    <td style="color: {% if payment.rent_charge.balance > 0 %}var(--danger){% else %}var(--success){% endif %};">
+                        M {{ payment.rent_charge.balance }}
                     </td>
                     <td>{{ payment.get_payment_method_display }}</td>
-                    <td>
-                        {% if payment.is_paid %}
-                        <span class="badge badge-success">Fully Paid</span>
-                        {% elif payment.amount_paid > 0 %}
-                        <span class="badge badge-warning">Partial</span>
-                        {% else %}
-                        <span class="badge badge-danger">Unpaid</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ payment.payment_date }}</td>
+                    <td>{{ payment.payment_reference|default:"—" }}</td>
+                    <td>{{ payment.paid_at|date:"M d, Y" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -205,8 +197,8 @@
                     <td>{{ issue.description|truncatechars:110 }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'issue_detail' issue.pk %}" class="btn-icon" title="View">V</a>
-                            <a href="{% url 'issue_edit' issue.pk %}" class="btn-icon" title="Update Status">S</a>
+                            <a href="{% url 'issue_detail' issue.pk %}" class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'issue_edit' issue.pk %}" class="btn-icon" title="Update Status">{% include "_icons.html" with name="check" %}</a>
                         </div>
                     </td>
                 </tr>

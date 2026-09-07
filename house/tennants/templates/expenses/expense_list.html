@@ -57,8 +57,8 @@
                     <td style="color: var(--danger); font-weight: 600;">M{{ expense.amount|floatformat:2 }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{% url 'expense_edit' expense.pk %}" class="btn-icon" title="Edit"></a>
-                            <a href="{% url 'expense_delete' expense.pk %}" class="btn-icon danger" title="Delete"></a>
+                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
+                            <a class="btn-icon danger" title="Delete">{% include "_icons.html" with name="trash" %}</a>
                         </div>
                     </td>
                 </tr>
