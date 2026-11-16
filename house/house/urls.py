@@ -23,7 +23,7 @@ from tennants.views.auth import (
     sms_password_reset_confirm,
     sms_password_reset_request,
 )
-from tennants.views.web import landing_page, dashboard
+from tennants.views.web import landing_page, dashboard, PublicHouseDetailView
 from tennants.views.tenants import report_issue, tenant_dashboard
 
 from django.urls import reverse_lazy
@@ -32,6 +32,7 @@ LOGOUT_REDIRECT_URL = reverse_lazy('landing')
 
 urlpatterns = [
     path("", landing_page, name="landing"),
+    path("rentals/<int:pk>/", PublicHouseDetailView.as_view(), name="public_house_detail"),
     path("admin/", admin.site.urls),
     path("api/admin/logout/", TokenRefreshView.as_view(), name="admin_logout"),
     path("acounts/", include("django.contrib.auth.urls")),

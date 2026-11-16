@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from django.core.cache import cache
 from unittest.mock import patch
-from tennants.models import Tenant, House, RentPayment, FlatBuilding
+from tennants.models import Tenant, House, RentCharge, Payment, FlatBuilding
 
 
 
@@ -65,7 +65,7 @@ class BaseTestCase(APITestCase):
         cache.clear()
         
         # User 1 should only see their building
-        response = self.client1.get('/api/flats/')
+        response = self.client1.get('/api/v1/buildings/')
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         print(response.data)
@@ -76,7 +76,7 @@ class BaseTestCase(APITestCase):
         cache.clear()
 
         # User 2 should only see their building
-        response = self.client2.get('/api/flats/')
+        response = self.client2.get('/api/v1/buildings/')
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
@@ -99,7 +99,7 @@ class BaseTestCase(APITestCase):
         )
         
         cache.clear()
-        response = self.client1.get('/api/flats/?name=Sunrise')
+        response = self.client1.get('/api/v1/buildings/?name=Sunrise')
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(len(response.data['results']), 1)
         self.assertIn('Sunrise', response.data['results'][0]['building_name'])
@@ -116,10 +116,10 @@ class BaseTestCase(APITestCase):
         cache.clear()
         
         # First request - should hit database
-        response1 = self.client1.get('/api/flats/')
+        response1 = self.client1.get('/api/v1/buildings/')
         
         # Second request - should hit cache
-        response2 = self.client1.get('/api/flats/')
+        response2 = self.client1.get('/api/v1/buildings/')
         
         self.assertEqual(response1.data, response2.data)
     
@@ -139,7 +139,7 @@ class BaseTestCase(APITestCase):
             house_rent_amount=Decimal('1000.00')
         )
         
-        response = self.client1.delete(f'/api/flats/{flat.pk}/')
+        response = self.client1.delete(f'/api/v1/buildings/{flat.pk}/')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Cannot delete', response.data['message'])
 
@@ -174,7 +174,7 @@ class HouseViewTests(BaseTestCase):
             'deposit_amount': '3000.00'
         }
         
-        response = self.client1.post('/api/houses/', data)
+        response = self.client1.post('/api/v1/houses/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
         house = House.objects.first()
@@ -214,7 +214,7 @@ class HouseViewTests(BaseTestCase):
             'house_rent_amount': '1000.00'
         }
         
-        response = self.client1.post('/api/houses/', data)
+        response = self.client1.post('/api/v1/houses/', data)
         # Model validation should prevent this
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
@@ -239,7 +239,7 @@ class HouseViewTests(BaseTestCase):
         cache.clear()
         
         # User 1 should ONLY see their house
-        response = self.client1.get('/api/houses/')
+        response = self.client1.get('/api/v1/houses/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(len(response.data['results']), 1)
@@ -257,7 +257,7 @@ class HouseViewTests(BaseTestCase):
         
         # User 1 tries to access User 2's house
         # Should get 404 because get_queryset filters it out
-        response = self.client1.get(f'/api/houses/{house.pk}/')
+        response = self.client1.get(f'/api/v1/houses/{house.pk}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_filter_by_flat_building(self):
@@ -276,7 +276,7 @@ class HouseViewTests(BaseTestCase):
         )
         
         cache.clear()
-        response = self.client1.get(f'/api/houses/?flat_building_id={self.flat1.id}')
+        response = self.client1.get(f'/api/v1/houses/?flat_building_id={self.flat1.id}')
         self.assertEqual(response.data['count'], 2)
         self.assertEqual(len(response.data['results']), 2)
 
@@ -315,7 +315,7 @@ class TenantViewTests(BaseTestCase):
             'house': self.house1.id
         }
         
-        response = self.client1.post('/api/tennants/', data)
+        response = self.client1.post('/api/v1/tenants/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
         tenant = Tenant.objects.first()
@@ -344,7 +344,7 @@ class TenantViewTests(BaseTestCase):
             'house': self.house1.id
         }
         
-        response = self.client1.post('/api/tennants/', data)
+        response = self.client1.post('/api/v1/tenants/', data)
         # Model validation should prevent this
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('occupied', str(response.data).lower())
@@ -373,13 +373,13 @@ class TenantViewTests(BaseTestCase):
         cache.clear()
         
         # Filter by active status
-        response = self.client1.get('/api/tennants/?is_active=true')
+        response = self.client1.get('/api/v1/tenants/?is_active=true')
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['full_name'], 'Active Tenant')
 
-class RentPaymentViewTests(BaseTestCase):
-    """Tests for RentPayment views"""
+class PaymentViewTests(BaseTestCase):
+    """Tests for current payment API views."""
     
     def setUp(self):
         super().setUp()
@@ -403,52 +403,44 @@ class RentPaymentViewTests(BaseTestCase):
             id_number='12345678',
             house=self.house1
         )
+        self.charge = RentCharge.objects.create(
+            user=self.user1,
+            tenant=self.tenant1,
+            month=1,
+            year=2024,
+            amount_due=Decimal('1000.00'),
+        )
     
-    def test_create_rent_payment(self):
-        """Test creating a rent payment"""
+    def test_create_payment(self):
+        """Test creating a payment."""
         data = {
             'tenant': self.tenant1.id,
-            'rent_month': 1,
-            'year': 2024,
-            'amount_paid': '1000.00',
+            'rent_charge': self.charge.id,
+            'amount': '1000.00',
             'payment_method': 'cash',
-            'is_paid': True
         }
         
-        response = self.client1.post('/api/rentpayments/', data)
+        response = self.client1.post('/api/v1/payments/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
-        payment = RentPayment.objects.first()
+        payment = Payment.objects.first()
         self.assertEqual(payment.user, self.user1)
     
-    def test_list_only_paid_payments(self):
-        """Test that list view only shows paid payments"""
-        # Create paid payment
-        RentPayment.objects.create(
+    def test_list_payments(self):
+        """Test that the payment list returns ledger entries."""
+        Payment.objects.create(
             user=self.user1,
             tenant=self.tenant1,
-            rent_month=1,
-            year=2024,
-            amount_paid=Decimal('1000.00'),
-            is_paid=True
-        )
-        
-        # Create unpaid payment
-        RentPayment.objects.create(
-            user=self.user1,
-            tenant=self.tenant1,
-            rent_month=2,
-            year=2024,
-            amount_paid=Decimal('500.00'),
-            is_paid=False
+            rent_charge=self.charge,
+            amount=Decimal('1000.00'),
+            payment_method='cash',
         )
         
         cache.clear()
-        response = self.client1.get('/api/rentpayments/')
-        # Should only return paid payments
+        response = self.client1.get('/api/v1/payments/')
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['rent_month'], 1)
+        self.assertEqual(response.data['results'][0]['rent_charge'], self.charge.id)
 
 
 class PermissionTests(BaseTestCase):
@@ -458,7 +450,7 @@ class PermissionTests(BaseTestCase):
         """Test that unauthenticated users can't access endpoints"""
         client = APIClient()  # No authentication
         
-        response = client.get('/api/flats/')
+        response = client.get('/api/v1/buildings/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
     def test_user_isolation(self):
@@ -474,7 +466,7 @@ class PermissionTests(BaseTestCase):
         cache.clear()
         
         # User 2 shouldn't see User 1's data
-        response = self.client2.get('/api/flats/')
+        response = self.client2.get('/api/v1/buildings/')
         self.assertEqual(response.data['count'], 0)
 
 
@@ -525,7 +517,7 @@ class AuthenticationTests(TestCase):
             'email': 'newadmin@test.com'
         }
         
-        response = self.client.post('/api/register/', data)
+        response = self.client.post('/api/register/admin/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
         # Verify user was created

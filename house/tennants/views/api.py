@@ -118,7 +118,7 @@ class TenantListView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
     #    return proper response on capacity validation error during tenant creation
         try:
-            tenant = serializer.save()
+            tenant = serializer.save(user=self.request.user)
             clear_cache_pattern(self.request, "tenants")
         except ValidationError as e:
             raise serializers.ValidationError({"detail": str(e)})

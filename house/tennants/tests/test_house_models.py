@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test import override_settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -6,6 +7,9 @@ from django.core.cache import cache
 from tennants.models import FlatBuilding, House, Tenant
 
 
+@override_settings(CACHES={
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+})
 class HouseModelTest(TestCase):
     def setUp(self):
         cache.clear()   

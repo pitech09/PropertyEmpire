@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse
 from django.db import transaction
+from decimal import Decimal, InvalidOperation
 
 from tennants.models import Tenant, Payment, RentCharge, Issue
 
@@ -94,6 +95,25 @@ def initiate_payment(request, charge_id):
 
         if payment_method != "cash" and not reference:
             messages.error(request, "Reference is required for non-cash payments.")
+            return redirect("initiate_payment", charge_id=charge.id)
+
+        valid_methods = {value for value, _label in PaymentRequest.PAYMENT_METHODS}
+        if payment_method not in valid_methods:
+            messages.error(request, "Select a valid payment method.")
+            return redirect("initiate_payment", charge_id=charge.id)
+
+        try:
+            amount = Decimal(amount)
+        except (InvalidOperation, TypeError):
+            messages.error(request, "Enter a valid payment amount.")
+            return redirect("initiate_payment", charge_id=charge.id)
+
+        outstanding = charge.balance
+        if amount <= 0 or amount > outstanding:
+            messages.error(
+                request,
+                f"Payment amount must be greater than zero and no more than M{max(outstanding, Decimal('0.00')):,.2f}.",
+            )
             return redirect("initiate_payment", charge_id=charge.id)
         
         payment_request = PaymentRequest.objects.create(

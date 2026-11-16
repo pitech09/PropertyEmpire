@@ -21,11 +21,14 @@ from tennants.views.web import (dashboard, BuildingListViewWeb, BuildingDetailVi
                     expense_list, expense_create, expense_edit, expense_delete,
                     issue_bids, accept_bid, reject_bid)
 
-from tennants.views.api import (TenantListView, TenantDetailView,
+from tennants.views.api import (
+                    TenantListView, TenantDetailView,
                     HouseListView, HouseDetailView,
-                    FlatBuildingListView, FlatBuildingDetailView,PaymentListView)
+                    FlatBuildingListView, FlatBuildingDetailView,
+                    PaymentListView, PaymentDetailView,
+                    RentChargeListView, RentChargeDetailView,
+                    RegisterAdminView, admin_login, user_login)
 from tennants.views.auth import AdminLogoutView, login_view, RegisterUserView, AdminLogoutView
-from tennants.views.api import user_login
 
 # urlpatterns = [
 #     path('tennants/', TenantListView.as_view(), name = 'tennant-list'),
@@ -144,4 +147,22 @@ urlpatterns += [
     path("workers/bids/", worker_my_bids, name="worker_my_bids"),
     path("workers/bids/<int:bid_id>/withdraw/", worker_withdraw_bid, name="worker_withdraw_bid"),
     path("workers/profile/", worker_profile, name="worker_profile"),
+]
+
+# Versioned DRF endpoints. The unversioned paths above are the existing
+# template views, so API clients must use /api/v1/ to avoid route collisions.
+urlpatterns += [
+    path("v1/tenants/", TenantListView.as_view(), name="api-tenant-list"),
+    path("v1/tenants/<int:pk>/", TenantDetailView.as_view(), name="api-tenant-detail"),
+    path("v1/houses/", HouseListView.as_view(), name="api-house-list"),
+    path("v1/houses/<int:pk>/", HouseDetailView.as_view(), name="api-house-detail"),
+    path("v1/buildings/", FlatBuildingListView.as_view(), name="api-building-list"),
+    path("v1/buildings/<int:pk>/", FlatBuildingDetailView.as_view(), name="api-building-detail"),
+    path("v1/payments/", PaymentListView.as_view(), name="api-payment-list"),
+    path("v1/payments/<int:pk>/", PaymentDetailView.as_view(), name="api-payment-detail"),
+    path("v1/rent-charges/", RentChargeListView.as_view(), name="api-rent-charge-list"),
+    path("v1/rent-charges/<int:pk>/", RentChargeDetailView.as_view(), name="api-rent-charge-detail"),
+    path("admin/login/", admin_login, name="api-admin-login"),
+    path("login/", user_login, name="api-login"),
+    path("register/admin/", RegisterAdminView.as_view(), name="api-register-admin"),
 ]

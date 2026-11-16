@@ -35,9 +35,17 @@ class FlatBuilding(models.Model):
             raise ValidationError("Number of houses must be non-negative")
         if not self.building_name:
             raise ValidationError("Building name is required")
+        if self.pk and self.number_of_houses < self.houses.count():
+            raise ValidationError(
+                "Number of houses cannot be lower than the houses already in this building."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if self.houses.filter(occupation=True).exists():
+        if self.houses.filter(models.Q(occupation=True) | models.Q(tenants__is_active=True)).exists():
             raise ValidationError("Cannot delete a flat building with occupied houses.")
         super().delete(*args, **kwargs)
 
@@ -82,6 +90,12 @@ class House(models.Model):
             raise ValidationError("House must be associated with a flat building")
         if self.house_rent_amount < 0 or self.deposit_amount < 0:
             raise ValidationError("Rent and deposit must be non-negative")
+        if (
+            self.user_id is not None
+            and self.flat_building.user_id is not None
+            and self.user_id != self.flat_building.user_id
+        ):
+            raise ValidationError("House owner must match the building owner")
         if self.flat_building.houses.exclude(pk=self.pk).filter(house_number=self.house_number).exists():
             raise ValidationError(f"House number {self.house_number} already exists in {self.flat_building.building_name}")
         # ensure number of houses in building is not exceeded
@@ -95,6 +109,11 @@ class House(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        if self.occupation or self.tenants.filter(is_active=True).exists():
+            raise ValidationError("Cannot delete an occupied house.")
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return f"{self.flat_building.building_name} - House {self.house_number}"
 
@@ -103,7 +122,7 @@ class House(models.Model):
 # HouseImage Model (up to 5 pictures per house)
 # ------------------------------
 class HouseImage(models.Model):
-    MAX_IMAGES = 5
+    MAX_IMAGES = 3
     ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
     MAX_FILE_SIZE_MB = 5
 
@@ -266,7 +285,14 @@ class RentCharge(models.Model):
         # auto-set amount_due from tenant's house
         if self.amount_due is None and self.tenant and self.tenant.house:
             self.amount_due = self.tenant.house.house_rent_amount
+        self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.amount_due is None or self.amount_due <= 0:
+            raise ValidationError({"amount_due": "Amount due must be greater than zero."})
+        if self.tenant_id and not self.tenant.house_id:
+            raise ValidationError({"tenant": "A rent charge requires a tenant assigned to a house."})
 
     @property
     def total_paid(self):
@@ -305,6 +331,8 @@ class Payment(models.Model):
 
     def clean(self):
         super().clean()
+        if self.amount is None or self.amount <= 0:
+            raise ValidationError({"amount": "Payment amount must be greater than zero."})
         if self.payment_method != "cash" and not self.payment_reference:
             raise ValidationError({
                 "payment_reference": "Reference required for non-cash payments"
@@ -358,6 +386,23 @@ class PaymentRequest(models.Model):
     payment_reference = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if self.amount is None or self.amount <= 0:
+            raise ValidationError({"amount": "Payment amount must be greater than zero."})
+        if self.tenant_id and self.rent_charge_id:
+            if self.rent_charge.tenant_id != self.tenant_id:
+                raise ValidationError(
+                    {"rent_charge": "Rent charge must belong to the selected tenant."}
+                )
+        if self.payment_method != "cash" and not self.payment_reference:
+            raise ValidationError(
+                {"payment_reference": "Reference required for non-cash payments."}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 

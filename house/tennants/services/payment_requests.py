@@ -2,8 +2,9 @@ import logging
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 
-from tennants.models import Payment
+from tennants.models import Payment, PaymentRequest
 
 from tennants.services.sms import TwilioNotificationService
 
@@ -179,30 +180,38 @@ def approve_payment_request(payment_request, user=None):
     status to "approved", and notifies the tenant.  Idempotent: already-approved
     requests are left untouched and ``False`` is returned.
     """
-    if payment_request.status == "approved":
-        return False
+    with transaction.atomic():
+        locked_request = PaymentRequest.objects.select_for_update().select_related(
+            "tenant", "rent_charge"
+        ).get(pk=payment_request.pk)
+        if locked_request.status != "pending":
+            return False
 
-    Payment.objects.get_or_create(
-        user=user,
-        tenant=payment_request.tenant,
-        rent_charge=payment_request.rent_charge,
-        amount=payment_request.amount,
-        payment_method=payment_request.payment_method,
-        payment_reference=payment_request.payment_reference,
-    )
+        Payment.objects.get_or_create(
+            user=user,
+            tenant=locked_request.tenant,
+            rent_charge=locked_request.rent_charge,
+            amount=locked_request.amount,
+            payment_method=locked_request.payment_method,
+            payment_reference=locked_request.payment_reference,
+        )
 
-    payment_request.status = "approved"
-    payment_request.save(update_fields=["status"])
+        locked_request.status = "approved"
+        locked_request.save(update_fields=["status"])
+        payment_request.status = "approved"
     notify_tenant_payment_request_status(payment_request)
     return True
 
 
 def reject_payment_request(payment_request, user=None):
     """Reject a pending payment request and notify the tenant."""
-    if payment_request.status == "rejected":
-        return False
+    with transaction.atomic():
+        locked_request = PaymentRequest.objects.select_for_update().get(pk=payment_request.pk)
+        if locked_request.status != "pending":
+            return False
 
-    payment_request.status = "rejected"
-    payment_request.save(update_fields=["status"])
+        locked_request.status = "rejected"
+        locked_request.save(update_fields=["status"])
+        payment_request.status = "rejected"
     notify_tenant_payment_request_status(payment_request)
     return True

@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers, generics
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from tennants.models import Tenant, House, HouseImage, Payment, FlatBuilding, RentCharge, Issue, PaymentRequest
+from tennants.models import Tenant, House, HouseImage, Payment, FlatBuilding, RentCharge, Issue, PaymentRequest, LandlordProfile
 from tennants.serializers import (TenantSerializer, HouseSerializer, PaymentSerializer,
                           FlatBuildingSerializer, RegisterAdminSerializer, AdminLoginSerializer, ForgotPasswordSerializer)
 import logging
@@ -15,10 +15,11 @@ import requests
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib.auth import authenticate, login
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.cache import cache
-from django.db.models import Sum, F, Value, ExpressionWrapper, DecimalField
+from django.db.models import Sum, F, Q, Value, ExpressionWrapper, DecimalField, Exists, OuterRef
 from django.db.models.functions import Coalesce, Greatest
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import permission_classes
@@ -32,6 +33,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import hashlib
 import json
 import logging
+from urllib.parse import quote
 from tennants.forms import RegistrationForm, HouseImageForm
 from django.shortcuts import render, redirect
 from django.db import IntegrityError, transaction
@@ -44,10 +46,26 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Sum
 from django.http import HttpResponseForbidden
 from tennants.services.sms import TwilioNotificationService
 from tennants.services.tenant_accounts import create_tenant_login_user, send_tenant_credentials_sms
+
+WHATSAPP_INQUIRY_MESSAGE = (
+    "hello, ke kopa ho botsa ka ntlong e tsoieleng malaeneng, "
+    "from potential tenant by propertyempire"
+)
+
+
+def _set_landlord_contact(house, profile):
+    phone = str(profile.phone) if profile and profile.phone else ""
+    phone_digits = "".join(character for character in phone if character.isdigit())
+    house.landlord_phone = phone
+    house.landlord_whatsapp_url = (
+        f"https://wa.me/{phone_digits}?text={quote(WHATSAPP_INQUIRY_MESSAGE)}"
+        if phone_digits else ""
+    )
 from tennants.services.payment_requests import (
     notify_tenant_issue_status,
     notify_tenant_payment_request_status,
@@ -64,6 +82,14 @@ logger = logging.getLogger(__name__)
 
 def _money(value):
     return value or Decimal("0.00")
+
+
+def _safe_next_url(request, candidate, fallback="payment_request_list"):
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return candidate
+    return fallback
 
 
 def _landlord_financials(user):
@@ -215,10 +241,54 @@ def _landlord_building_financials(user):
 # WEB TEMPLATE VIEWS (for normal users in browser)
 # ============================================================================
 
+def _landing_search_results(search_query):
+    houses = House.objects.select_related("flat_building").annotate(
+        has_active_tenant=Exists(
+            Tenant.objects.filter(house=OuterRef("pk"), is_active=True)
+        )
+    )
+
+    if search_query:
+        status_terms = {
+            "available": Q(occupation=False, has_active_tenant=False),
+            "vacant": Q(occupation=False, has_active_tenant=False),
+            "open": Q(occupation=False, has_active_tenant=False),
+            "occupied": Q(occupation=True) | Q(has_active_tenant=True),
+            "rented": Q(occupation=True) | Q(has_active_tenant=True),
+            "unavailable": Q(occupation=True) | Q(has_active_tenant=True),
+        }
+        for term in search_query.lower().split():
+            if term in status_terms:
+                houses = houses.filter(status_terms[term])
+            else:
+                houses = houses.filter(
+                    Q(flat_building__building_name__icontains=term)
+                    | Q(flat_building__address__icontains=term)
+                    | Q(house_number__icontains=term)
+                    | Q(house_size__icontains=term)
+                )
+    results = list(houses.order_by("flat_building__building_name", "house_number")[:50])
+    owner_ids = {
+        house.flat_building.user_id or house.user_id
+        for house in results
+        if house.flat_building.user_id or house.user_id
+    }
+    profiles = LandlordProfile.objects.filter(user_id__in=owner_ids).in_bulk(field_name="user_id")
+    for house in results:
+        owner_id = house.flat_building.user_id or house.user_id
+        _set_landlord_contact(house, profiles.get(owner_id))
+    return results
+
+
 # landing page
 def landing_page(request):
-    """Render the landing page"""
-    return render(request, 'landing.html')
+    """Render the public landing page and searchable rental listings."""
+    search_query = request.GET.get("q", "").strip()
+
+    return render(request, "landing.html", {
+        "search_query": search_query,
+        "search_results": _landing_search_results(search_query),
+    })
 
 # view to change passowrd for normal users
 class ForgotPasswordViewWeb(APIView):
@@ -661,7 +731,7 @@ class BuildingDeleteViewWeb(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         # first check if building has houses and those houses have tenants
         building = self.get_object()
-        if building.houses.filter(occupation=True).exists():
+        if building.houses.filter(Q(occupation=True) | Q(tenants__is_active=True)).exists():
             messages.error(self.request, 'Cannot delete building with occupied houses!')
             return redirect('building_list')
         messages.success(self.request, 'Building deleted successfully!')
@@ -755,6 +825,17 @@ class HouseDeleteViewWeb(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return House.objects.filter(user=self.request.user)
 
+    def delete(self, request, *args, **kwargs):
+        house = self.get_object()
+        if house.occupation or house.tenants.filter(is_active=True).exists():
+            messages.error(request, "Cannot delete an occupied house. Deactivate or move the tenant first.")
+            return redirect("house_list")
+        try:
+            return super().delete(request, *args, **kwargs)
+        except ValidationError as exc:
+            messages.error(request, str(exc))
+            return redirect("house_list")
+
 
 class HouseDetailViewWeb(LoginRequiredMixin, DetailView):
     model = House
@@ -772,6 +853,29 @@ class HouseDetailViewWeb(LoginRequiredMixin, DetailView):
             tenant__house=self.object,
             tenant__house__user=self.request.user,
         ).select_related("tenant").order_by("-created_at")
+        return context
+
+
+class PublicHouseDetailView(DetailView):
+    """Public, read-only property page used by rental search visitors."""
+    model = House
+    template_name = "houses/public_house_detail.html"
+    context_object_name = "house"
+
+    def get_queryset(self):
+        return House.objects.select_related(
+            "flat_building", "flat_building__user", "user"
+        ).prefetch_related("images").annotate(
+            has_active_tenant=Exists(
+                Tenant.objects.filter(house=OuterRef("pk"), is_active=True)
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        owner_id = self.object.flat_building.user_id or self.object.user_id
+        profile = LandlordProfile.objects.filter(user_id=owner_id).first()
+        _set_landlord_contact(self.object, profile)
         return context
 
 
@@ -925,7 +1029,7 @@ class PaymentRequestDetailViewWeb(LoginRequiredMixin, DetailView):
 
 class PaymentRequestCreateViewWeb(LoginRequiredMixin, CreateView):
     model = PaymentRequest
-    fields = ["tenant", "rent_charge", "amount", "payment_method", "payment_reference", "status"]
+    fields = ["tenant", "rent_charge", "amount", "payment_method", "payment_reference"]
     template_name = "payments/payment_request_form.html"
     success_url = reverse_lazy("payment_request_list")
 
@@ -962,24 +1066,24 @@ class PaymentRequestUpdateViewWeb(LoginRequiredMixin, UpdateView):
         return form
 
     def form_valid(self, form):
-        old_status = PaymentRequest.objects.get(pk=form.instance.pk).status
-        response = super().form_valid(form)
+        if form.instance.status != "pending":
+            form.add_error(None, "Only pending payment requests can be reviewed.")
+            return self.form_invalid(form)
 
-        if self.object.status == "approved" and old_status != "approved":
-            Payment.objects.get_or_create(
-                user=self.request.user,
-                tenant=self.object.tenant,
-                rent_charge=self.object.rent_charge,
-                amount=self.object.amount,
-                payment_method=self.object.payment_method,
-                payment_reference=self.object.payment_reference,
-            )
+        requested_status = form.cleaned_data["status"]
+        if requested_status == "approved":
+            changed = service_approve_payment_request(form.instance, user=self.request.user)
+        elif requested_status == "rejected":
+            changed = service_reject_payment_request(form.instance, user=self.request.user)
+        else:
+            changed = False
 
-        if self.object.status != old_status and self.object.status in {"approved", "rejected"}:
-            transaction.on_commit(lambda: notify_tenant_payment_request_status(self.object))
+        if not changed and requested_status != "pending":
+            form.add_error(None, "This payment request was already reviewed.")
+            return self.form_invalid(form)
 
         messages.success(self.request, "Payment request status updated successfully!")
-        return response
+        return redirect(self.get_success_url())
 
 
 def _payment_request_base_queryset(request):
@@ -990,10 +1094,11 @@ def _payment_request_base_queryset(request):
 
 
 @login_required
+@require_POST
 def approve_payment_request(request, pk):
     """Verify a tenant's payment request, recording it in the payment ledger."""
     payment_request = get_object_or_404(_payment_request_base_queryset(request), pk=pk)
-    redirect_url = request.POST.get("next") or request.GET.get("next") or "payment_request_list"
+    redirect_url = _safe_next_url(request, request.POST.get("next"))
 
     if payment_request.status == "pending":
         service_approve_payment_request(payment_request, user=request.user)
@@ -1009,10 +1114,11 @@ def approve_payment_request(request, pk):
 
 
 @login_required
+@require_POST
 def reject_payment_request(request, pk):
     """Reject a tenant's payment request."""
     payment_request = get_object_or_404(_payment_request_base_queryset(request), pk=pk)
-    redirect_url = request.POST.get("next") or request.GET.get("next") or "payment_request_list"
+    redirect_url = _safe_next_url(request, request.POST.get("next"))
 
     if payment_request.status == "pending":
         service_reject_payment_request(payment_request, user=request.user)
@@ -1537,6 +1643,7 @@ def issue_bids(request, issue_id):
 
 
 @login_required
+@require_POST
 def accept_bid(request, bid_id):
     """Landlord accepts a bid"""
     bid = get_object_or_404(
@@ -1611,6 +1718,7 @@ def house_image_delete(request, house_pk, image_pk):
 
 
 @login_required
+@require_POST
 def reject_bid(request, bid_id):
     """Landlord rejects a bid"""
     bid = get_object_or_404(

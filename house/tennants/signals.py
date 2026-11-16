@@ -84,6 +84,7 @@ def notify_on_tenant_activation(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = Tenant.objects.get(pk=instance.pk)
+            instance._previous_house_id = old_instance.house_id
             
             # If tenant is being deactivated
             if old_instance.is_active and not instance.is_active:
@@ -114,19 +115,13 @@ def update_house_occupation(sender, instance, **kwargs):
         house.auto_change_occupation()
 
 
-# whenever a Tenant is created or updated
+# Whenever a Tenant is created or updated, recalculate both sides of a move.
 @receiver(post_save, sender=Tenant)
 def update_house_occupation_on_save(sender, instance, **kwargs):
-    
-    if instance.house:
-        instance.house.auto_change_occupation()
-
-# whenever a Payment is created if ghe amount field is blunk we getthe amount from the house rent
-@receiver(pre_save, sender=Payment)
-def set_payment_amount(sender, instance, **kwargs):
-    if instance.amount is None or instance.amount == 0:
-        if instance.tenant and instance.tenant.house:
-            instance.amount = instance.tenant.house.house_rent_amount
+    previous_house_id = getattr(instance, "_previous_house_id", None)
+    house_ids = {house_id for house_id in (previous_house_id, instance.house_id) if house_id}
+    for house in House.objects.filter(pk__in=house_ids):
+        house.auto_change_occupation()
 
 
 @receiver(pre_delete, sender=Payment)

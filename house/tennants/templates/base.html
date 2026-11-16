@@ -1152,6 +1152,101 @@
 
         /* Accessibility: consistent, visible focus + touch feedback */
         :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+        /* Mobile-first application shell */
+        .navbar { padding: .75rem 1rem; background: rgba(255,255,255,.96); }
+        .navbar-container { width: 100%; max-width: 1440px; flex-wrap: wrap; gap: .75rem; }
+        .brand-icon { width: 36px; height: 36px; border-radius: 9px; }
+        .brand-icon svg { width: 21px; height: 21px; }
+        .brand-text { font-size: 1.1rem; }
+        .mobile-nav-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; margin-left: auto;
+            border: 1px solid var(--border); border-radius: 10px;
+            background: #fff; color: var(--text); cursor: pointer; font-size: 1.35rem;
+        }
+        .mobile-nav-toggle[aria-expanded="true"] { color: var(--primary); }
+        .navbar-menu { display: none; width: 100%; flex-direction: column; gap: .75rem; padding-top: .5rem; }
+        .navbar-menu.is-open { display: flex; }
+        .navbar-nav { width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 12px; }
+        .nav-link { display: flex; align-items: center; min-height: 44px; padding: .7rem .85rem; }
+        .navbar-user { width: 100%; justify-content: space-between; gap: .5rem; }
+        .user-badge { flex: 1; min-width: 0; }
+        .user-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-logout, .btn { min-height: 44px; }
+
+        .main-content { width: 100%; padding: 1rem; }
+        .page-header { align-items: stretch; flex-direction: column; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: 1rem; }
+        .page-title { font-size: 1.55rem; line-height: 1.2; }
+        .page-header > div, .page-header > .btn { width: 100%; }
+        .page-header > div { flex-wrap: wrap; }
+        .page-header > div .btn, .page-header > div .btn-help { flex: 1; justify-content: center; }
+        .card { padding: 1rem; border-radius: 12px; margin-bottom: 1rem; }
+        .card-header { align-items: flex-start; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: .75rem; }
+        .card-title { font-size: 1rem; }
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-bottom: 1rem; }
+        .stat-card { padding: .9rem .65rem; border-radius: 12px; }
+        .stat-value { font-size: 1.65rem; overflow-wrap: anywhere; }
+        .stat-label { font-size: .68rem; line-height: 1.25; }
+        .stat-card-icon { width: 36px; height: 36px; margin-bottom: .5rem; }
+        .action-tiles { grid-template-columns: 1fr; gap: .65rem; }
+        .action-tile { min-height: 0; padding: 1rem; }
+        .hero-banner { flex-direction: column; align-items: flex-start; padding: 1.25rem; gap: 1rem; margin-bottom: 1rem; border-radius: 14px; }
+        .hero-title { font-size: 1.55rem; }
+        .hero-subtitle { font-size: .9rem; }
+        .hero-actions { width: 100%; flex-direction: column; }
+        .hero-actions .btn { width: 100%; justify-content: center; }
+        .hero-illustration { width: 64px; height: 64px; }
+        .breadcrumb { overflow-x: auto; white-space: nowrap; padding-bottom: .25rem; font-size: .8rem; }
+        .filter-bar { align-items: stretch; flex-direction: column; gap: .5rem; padding: .75rem; }
+        .filter-bar form { width: 100%; flex-direction: column !important; align-items: stretch !important; gap: .5rem !important; }
+        .filter-bar select, .filter-bar input { width: 100% !important; min-width: 0 !important; }
+        .form-grid { grid-template-columns: 1fr; gap: 0; }
+        .form-group { margin-bottom: 1rem; }
+        .form-control { min-height: 46px; font-size: 16px; }
+        textarea.form-control { min-height: 110px; }
+        input[type="checkbox"] { width: 22px; height: 22px; }
+        .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { min-width: 640px; }
+        th, td { padding: .7rem .75rem; font-size: .82rem; }
+        .action-buttons { flex-wrap: wrap; }
+        .btn-icon { flex: 0 0 40px; width: 40px; height: 40px; }
+        .detail-grid { grid-template-columns: 1fr; gap: .65rem; }
+        .detail-item { padding: .9rem; }
+        .detail-value { font-size: 1rem; overflow-wrap: anywhere; }
+        .empty-state { padding: 2.5rem 1rem; }
+        .help-modal { padding: .75rem; }
+        .help-modal-content { max-height: 88vh; }
+        .help-modal-body { padding: 1rem; }
+        .alert { align-items: flex-start; padding: .85rem 1rem; font-size: .9rem; }
+
+        @media (min-width: 480px) {
+            .main-content { padding: 1.25rem; }
+            .action-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 768px) {
+            .main-content { padding: 1.5rem; }
+            .page-header { flex-direction: row; align-items: center; }
+            .page-header > div, .page-header > .btn { width: auto; }
+            .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+            .action-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; }
+            .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+            .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero-actions { width: auto; flex-direction: row; }
+            .hero-actions .btn { width: auto; }
+        }
+        @media (min-width: 1050px) {
+            .navbar { padding: 1rem 2rem; }
+            .navbar-container { flex-wrap: nowrap; }
+            .mobile-nav-toggle { display: none; }
+            .navbar-menu { display: flex; width: auto; flex: 1; flex-direction: row; align-items: center; justify-content: flex-end; gap: 1rem; padding-top: 0; }
+            .navbar-nav { width: auto; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
+            .navbar-user { width: auto; }
+            .main-content { padding: 1.5rem 2rem; }
+            .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .action-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .detail-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        }
     </style>
 </head>
 <body>
@@ -1176,25 +1271,14 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="{% if request.user.is_staff or request.user.is_superuser %}{% url 'owner_dashboard' %}{% elif request.user.tenant_set.exists %}{% url 'tenant_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="navbar-brand">
-                <div class="brand-icon">
-                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="peGold" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#f7e27a"/>
-                        <stop offset="50%" stop-color="#d4af37"/>
-                        <stop offset="100%" stop-color="#a67c00"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- PE letters -->
-                    <rect x="10" y="10" width="86" height="180" rx="8" fill="url(#peGold)"/>
-                    <rect x="104" y="10" width="86" height="180" rx="8" fill="url(#peGold)"/>
-                    <text x="18" y="150" font-family="Arial Black,sans-serif" font-size="140" font-weight="900" fill="#1a1a2e">P</text>
-                    <text x="112" y="150" font-family="Arial Black,sans-serif" font-size="140" font-weight="900" fill="#1a1a2e">E</text>
-                    </svg>
-                </div>
+
                 <span class="brand-text">Property<span>Empire</span></span>
             </a>
-            
+            <button type="button" class="mobile-nav-toggle" id="mobileNavToggle" aria-controls="navbarMenu" aria-expanded="false" aria-label="Open navigation menu">
+                <span aria-hidden="true">&#9776;</span>
+            </button>
+
+            <div class="navbar-menu" id="navbarMenu">
             <ul class="navbar-nav">
                 {% if request.user.is_staff or request.user.is_superuser %}
                 <li><a href="{% url 'owner_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'owner_dashboard' %}active{% endif %}">Owner</a></li>
@@ -1228,6 +1312,7 @@
                     <button type="submit" class="btn-logout">Logout</button>
                 </form>
             </div>
+            </div>
         </div>
     </nav>
 
@@ -1245,6 +1330,28 @@
         {% block content %}{% endblock %}
     </main>
     {% block extra_js %}{% endblock %}
+    <script>
+        (function () {
+            var toggle = document.getElementById('mobileNavToggle');
+            var menu = document.getElementById('navbarMenu');
+            if (!toggle || !menu) return;
+
+            toggle.addEventListener('click', function () {
+                var open = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', String(!open));
+                toggle.setAttribute('aria-label', open ? 'Open navigation menu' : 'Close navigation menu');
+                menu.classList.toggle('is-open', !open);
+            });
+
+            menu.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    toggle.setAttribute('aria-expanded', 'false');
+                    toggle.setAttribute('aria-label', 'Open navigation menu');
+                    menu.classList.remove('is-open');
+                });
+            });
+        }());
+    </script>
 <!-- BEGIN PLERDY CODE -->
     <script type="text/javascript" defer data-plerdy_code='1'>
         var _protocol="https:"==document.location.protocol?"https://":"http://";

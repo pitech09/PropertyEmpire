@@ -5,7 +5,6 @@ from django.contrib.auth.forms import UserCreationForm
 from phonenumber_field.formfields import PhoneNumberField
 
 
-
 class RegistrationForm(UserCreationForm):
     first_name = forms.CharField(required=True, max_length=30)
     last_name = forms.CharField(required=True, max_length=30)

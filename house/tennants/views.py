@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
@@ -964,5 +963,3 @@ def bulk_create_rent_charges(request):
     }
 
     return render(request, "rentcharges/rentcharge_bulk_create.html", context)
-=======
->>>>>>> 9385127 ( added a notification featur to the app to allow sending sms to tenants)
