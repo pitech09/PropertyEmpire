@@ -255,6 +255,7 @@ WSGI_APPLICATION = "house.wsgi.application"
 
 
 # Database
+# PostgreSQL/Supabase configuration.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -266,8 +267,16 @@ DATABASES = {
         "OPTIONS": {
             "sslmode": os.environ.get("DB_SSLMODE", "require"),
         },
-     }
- }
+    }
+}
+
+# Local development fallback:
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 
 

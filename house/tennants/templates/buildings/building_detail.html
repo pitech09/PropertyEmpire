@@ -102,8 +102,8 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
-                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
+                            <a href="{% url 'house_detail' house.pk %}" class="btn-icon" title="View House {{ house.house_number }}" aria-label="View House {{ house.house_number }}">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'house_edit' house.pk %}" class="btn-icon" title="Edit House {{ house.house_number }}" aria-label="Edit House {{ house.house_number }}">{% include "_icons.html" with name="pencil" %}</a>
                         </div>
                     </td>
                 </tr>

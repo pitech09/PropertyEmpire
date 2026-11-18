@@ -62,8 +62,8 @@
                     <td>{{ issue.created_at|date:"M d, Y" }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
-                            <a class="btn-icon" title="Update Status">{% include "_icons.html" with name="check" %}</a>
+                            <a href="{% url 'issue_detail' issue.pk %}" class="btn-icon" title="View" aria-label="View issue">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'issue_edit' issue.pk %}" class="btn-icon" title="Update Status" aria-label="Update issue status">{% include "_icons.html" with name="check" %}</a>
                         </div>
                     </td>
                 </tr>

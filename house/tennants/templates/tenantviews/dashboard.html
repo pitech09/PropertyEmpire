@@ -34,6 +34,41 @@
     <div class="hero-illustration"></div>
 </div>
 
+<div class="card" style="border-left: 4px solid var(--primary);">
+    <div style="display: flex; gap: 0.9rem; align-items: flex-start;">
+        <div style="font-size: 1.25rem; line-height: 1;">✓</div>
+        <div>
+            <h2 class="card-title" style="margin-bottom: 0.35rem;">How rent payment works</h2>
+            <p style="margin: 0; color: var(--text-secondary);">
+                Choose an outstanding rent charge, enter the amount and payment details, then submit it for verification.
+                Your landlord confirms the payment before it is added to your official payment history.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="background: linear-gradient(135deg, var(--surface-subtle, #f7f8fa), rgba(24, 119, 242, 0.08)); border: 1px solid rgba(24, 119, 242, 0.25);">
+    {% if next_unpaid_charge %}
+    <div class="card-header">
+        <div>
+            <h2 class="card-title" style="margin-bottom: 0.25rem;">Make a rent payment</h2>
+            <p style="margin: 0; color: var(--text-secondary);">Your next outstanding charge is {{ next_unpaid_charge.get_month_display }} {{ next_unpaid_charge.year }}.</p>
+        </div>
+        <strong style="font-size: 1.2rem; color: var(--primary);">M {{ next_unpaid_charge.balance }}</strong>
+    </div>
+    <p style="margin: 0 0 1rem; color: var(--text-secondary);">Submit your payment details for your landlord to confirm. It will appear in payment history after approval.</p>
+    <a href="{% url 'initiate_payment' next_unpaid_charge.id %}" class="btn btn-primary">Initiate payment</a>
+    {% else %}
+    <div class="card-header">
+        <div>
+            <h2 class="card-title" style="margin-bottom: 0.25rem;">Rent payment</h2>
+            <p style="margin: 0; color: var(--text-secondary);">There is no unpaid rent charge available for payment right now.</p>
+        </div>
+    </div>
+    <p style="margin: 0; color: var(--text-secondary);">Your landlord must create the rent charge before you can submit a payment. Once it appears under Rent Charges, select <strong>Initiate payment</strong>.</p>
+    {% endif %}
+</div>
+
 <!-- Quick Stats -->
 <div class="stats-grid">
     <div class="stat-card">
@@ -139,7 +174,7 @@
                             <span class="badge badge-info">Pending Review</span>
                         {% else %}
                             <a href="{% url 'initiate_payment' charge.id %}" class="btn btn-sm btn-primary">
-                                Pay M{{ charge.amount_due }}
+                                Initiate payment · M{{ charge.balance }}
                             </a>
                         {% endif %}
                     </td>

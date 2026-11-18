@@ -1,38 +1,88 @@
 {% extends "base.html" %}
 {% block title %}Place Bid - PropertyEmpire{% endblock %}
+{% block extra_head %}
+<style>
+    .bid-page { max-width: 980px; margin: 0 auto; }
+    .bid-intro { margin: -.75rem 0 1.5rem; color: var(--text-secondary); }
+    .bid-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 1rem; align-items: start; }
+    .bid-card { padding: 1.35rem; }
+    .bid-card .card-header { margin-bottom: 1.1rem; }
+    .issue-summary { background: linear-gradient(135deg, rgba(24,119,242,.08), rgba(24,119,242,.02)); border-color: rgba(24,119,242,.22); }
+    .issue-summary .card-title { color: var(--text); }
+    .issue-description { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-secondary); white-space: pre-line; }
+    .bid-form-note { margin: -.35rem 0 1.25rem; color: var(--text-muted); font-size: .88rem; }
+    .bid-field { margin-bottom: 1.1rem; }
+    .bid-field label { display: block; margin-bottom: .45rem; color: var(--text); font-weight: 650; }
+    .bid-field .form-control { min-height: 46px; }
+    .bid-field textarea.form-control { min-height: 125px; resize: vertical; }
+    .field-help { display: block; margin-top: .4rem; color: var(--text-muted); font-size: .8rem; }
+    .field-error { display: block; margin-top: .4rem; color: var(--danger); font-size: .82rem; }
+    .amount-wrap { position: relative; }
+    .amount-wrap .currency { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 700; pointer-events: none; }
+    .amount-wrap .form-control { padding-left: 2.1rem; }
+    .bid-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.4rem; }
+    .bid-actions .btn { min-height: 46px; justify-content: center; }
+    @media (max-width: 760px) {
+        .bid-layout { grid-template-columns: 1fr; }
+        .bid-page .page-header { margin-bottom: .8rem; }
+        .bid-page .page-header .btn { width: 100%; justify-content: center; }
+        .bid-actions { flex-direction: column; }
+        .bid-actions .btn { width: 100%; }
+    }
+</style>
+{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1 class="page-title">Place <span>Bid</span></h1>
-    <a href="{% url 'worker_dashboard' %}" class="btn btn-secondary"> Back</a>
-</div>
-<div class="card">
-    <div class="card-header"><h2 class="card-title">Issue Details</h2></div>
-    <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">Issue</div><div class="detail-value">{{ issue.title }}</div></div>
-        <div class="detail-item"><div class="detail-label">Property</div><div class="detail-value">{{ issue.tenant.house.flat_building.building_name }}</div></div>
-        <div class="detail-item"><div class="detail-label">House</div><div class="detail-value">{{ issue.tenant.house.house_number }}</div></div>
-        <div class="detail-item"><div class="detail-label">Reported</div><div class="detail-value">{{ issue.created_at|date:"M d, Y" }}</div></div>
+<div class="bid-page">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Submit a <span>Bid</span></h1>
+            <p class="bid-intro">Review the maintenance request, then tell the landlord your price and estimated completion time.</p>
+        </div>
+        <a href="{% url 'worker_dashboard' %}" class="btn btn-secondary">Back to jobs</a>
     </div>
-    <p style="color: var(--text-secondary); margin-top: 1rem;"><strong>Description:</strong> {{ issue.description }}</p>
-</div>
-<div class="card">
-    <div class="card-header"><h2 class="card-title">Your Bid</h2></div>
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-grid">
-            {% for field in form %}
-            <div class="form-group">
-                <label class="form-label">{{ field.label }} *</label>
-                {{ field }}
-                {% if field.help_text %}<small style="color: var(--text-muted);">{{ field.help_text }}</small>{% endif %}
-                {% if field.errors %}<small style="color: var(--danger);">{{ field.errors|striptags }}</small>{% endif %}
+
+    <div class="bid-layout">
+        <section class="card bid-card issue-summary">
+            <div class="card-header"><h2 class="card-title">Maintenance request</h2><span class="badge badge-warning">Open</span></div>
+            <div class="detail-grid">
+                <div class="detail-item"><div class="detail-label">Issue</div><div class="detail-value">{{ issue.title }}</div></div>
+                <div class="detail-item"><div class="detail-label">Property</div><div class="detail-value">{{ issue.tenant.house.flat_building.building_name }}</div></div>
+                <div class="detail-item"><div class="detail-label">House</div><div class="detail-value">{{ issue.tenant.house.house_number }}</div></div>
+                <div class="detail-item"><div class="detail-label">Reported</div><div class="detail-value">{{ issue.created_at|date:"M d, Y" }}</div></div>
             </div>
-            {% endfor %}
-        </div>
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-            <button type="submit" class="btn btn-primary">Submit Bid</button>
-            <a href="{% url 'worker_dashboard' %}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <p class="issue-description"><strong>Description</strong><br>{{ issue.description }}</p>
+        </section>
+
+        <section class="card bid-card">
+            <div class="card-header"><h2 class="card-title">Your offer</h2></div>
+            <p class="bid-form-note">Your bid will be sent to the landlord for review.</p>
+            <form method="post" novalidate>
+        {% csrf_token %}
+                {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|striptags }}</div>{% endif %}
+                <div class="bid-field">
+                    <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }} <span aria-hidden="true">*</span></label>
+                    <div class="amount-wrap"><span class="currency">M</span>{{ form.amount }}</div>
+                    {% if form.amount.help_text %}<small class="field-help">{{ form.amount.help_text }}</small>{% endif %}
+                    {% if form.amount.errors %}<small class="field-error">{{ form.amount.errors|striptags }}</small>{% endif %}
+                </div>
+                <div class="bid-field">
+                    <label for="{{ form.estimated_days.id_for_label }}">{{ form.estimated_days.label }} <span aria-hidden="true">*</span></label>
+                    {{ form.estimated_days }}
+                    {% if form.estimated_days.help_text %}<small class="field-help">{{ form.estimated_days.help_text }}</small>{% endif %}
+                    {% if form.estimated_days.errors %}<small class="field-error">{{ form.estimated_days.errors|striptags }}</small>{% endif %}
+                </div>
+                <div class="bid-field">
+                    <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                    {% if form.notes.help_text %}<small class="field-help">{{ form.notes.help_text }}</small>{% endif %}
+                    {% if form.notes.errors %}<small class="field-error">{{ form.notes.errors|striptags }}</small>{% endif %}
+                </div>
+                <div class="bid-actions">
+                    <button type="submit" class="btn btn-primary">Submit bid</button>
+                    <a href="{% url 'worker_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </section>
+    </div>
 </div>
 {% endblock %}

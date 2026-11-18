@@ -223,8 +223,8 @@
                     <td><span class="badge badge-warning">{{ building.vacant_houses }}</span></td>
                     <td>
                         <div class="action-buttons">
-                            <a class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
-                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
+                            <a href="{% url 'building_detail' building.pk %}" class="btn-icon" title="View {{ building.building_name }}" aria-label="View {{ building.building_name }}">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'building_edit' building.pk %}" class="btn-icon" title="Edit {{ building.building_name }}" aria-label="Edit {{ building.building_name }}">{% include "_icons.html" with name="pencil" %}</a>
                         </div>
                     </td>
                 </tr>
@@ -286,8 +286,8 @@
                     <td>{{ issue.created_at|date:"M d, Y" }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a class="btn-icon" title="View">{% include "_icons.html" with name="eye" %}</a>
-                            <a class="btn-icon" title="Update Status">{% include "_icons.html" with name="check" %}</a>
+                            <a href="{% url 'issue_detail' issue.pk %}" class="btn-icon" title="View {{ issue.title }}" aria-label="View {{ issue.title }}">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'issue_edit' issue.pk %}" class="btn-icon" title="Update status for {{ issue.title }}" aria-label="Update status for {{ issue.title }}">{% include "_icons.html" with name="check" %}</a>
                         </div>
                     </td>
                 </tr>
@@ -470,4 +470,3 @@
 </div>
 
 {% endblock %}
-

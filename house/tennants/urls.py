@@ -142,7 +142,7 @@ from tennants.views.workers import (
 
 urlpatterns += [
     path("workers/register/", worker_register, name="worker_register"),
-    path("workers/dashboard/", worker_dashboard, name="worker_dashboard"),
+    path("workers/dashboard/", worker_dashboard, name="worker_dashboard_api"),
     path("workers/issues/<int:issue_id>/bid/", worker_place_bid, name="worker_place_bid"),
     path("workers/bids/", worker_my_bids, name="worker_my_bids"),
     path("workers/bids/<int:bid_id>/withdraw/", worker_withdraw_bid, name="worker_withdraw_bid"),

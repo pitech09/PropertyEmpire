@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import authenticate, login
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.cache import cache
-from django.db.models import Sum, F, Q, Value, ExpressionWrapper, DecimalField, Exists, OuterRef
+from django.db.models import Sum, F, Q, Value, ExpressionWrapper, DecimalField, Exists, OuterRef, Prefetch
 from django.db.models.functions import Coalesce, Greatest
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import permission_classes
@@ -267,16 +267,45 @@ def _landing_search_results(search_query):
                     | Q(house_number__icontains=term)
                     | Q(house_size__icontains=term)
                 )
-    results = list(houses.order_by("flat_building__building_name", "house_number")[:50])
+    matching_building_ids = houses.values_list("flat_building_id", flat=True).distinct()
+    buildings = FlatBuilding.objects.filter(pk__in=matching_building_ids).prefetch_related(
+        Prefetch(
+            "houses",
+            queryset=House.objects.prefetch_related("images").annotate(
+                has_active_tenant=Exists(
+                    Tenant.objects.filter(house=OuterRef("pk"), is_active=True)
+                )
+            ).order_by("house_number"),
+            to_attr="public_houses",
+        )
+    ).order_by("building_name")[:50]
+
+    results = list(buildings)
     owner_ids = {
-        house.flat_building.user_id or house.user_id
-        for house in results
-        if house.flat_building.user_id or house.user_id
+        owner_id
+        for building in results
+        for owner_id in [building.user_id, *(house.user_id for house in building.public_houses)]
+        if owner_id
     }
     profiles = LandlordProfile.objects.filter(user_id__in=owner_ids).in_bulk(field_name="user_id")
-    for house in results:
-        owner_id = house.flat_building.user_id or house.user_id
-        _set_landlord_contact(house, profiles.get(owner_id))
+    for building in results:
+        building.total_property_houses = len(building.public_houses)
+        building.occupied_property_houses = sum(
+            1 for house in building.public_houses
+            if house.occupation or house.has_active_tenant
+        )
+        building.available_property_houses = (
+            building.total_property_houses - building.occupied_property_houses
+        )
+        building.available_houses = [
+            house for house in building.public_houses
+            if not house.occupation and not house.has_active_tenant
+        ]
+        owner_id = building.user_id or next(
+            (house.user_id for house in building.public_houses if house.user_id),
+            None,
+        )
+        _set_landlord_contact(building, profiles.get(owner_id))
     return results
 
 
@@ -288,6 +317,8 @@ def landing_page(request):
     return render(request, "landing.html", {
         "search_query": search_query,
         "search_results": _landing_search_results(search_query),
+        "platform_fee_percent": settings.PLATFORM_TRANSACTION_FEE_RATE * 100,
+        "monthly_subscription": settings.LANDLORD_MONTHLY_SUBSCRIPTION,
     })
 
 # view to change passowrd for normal users
@@ -879,6 +910,48 @@ class PublicHouseDetailView(DetailView):
         return context
 
 
+class PublicBuildingDetailView(DetailView):
+    """Public property page showing all houses in a building."""
+    model = FlatBuilding
+    template_name = "houses/public_building_detail.html"
+    context_object_name = "building"
+
+    def get_queryset(self):
+        return FlatBuilding.objects.select_related("user").prefetch_related(
+            Prefetch(
+                "houses",
+                queryset=House.objects.prefetch_related("images").annotate(
+                    has_active_tenant=Exists(
+                        Tenant.objects.filter(house=OuterRef("pk"), is_active=True)
+                    )
+                ).order_by("house_number"),
+                to_attr="public_houses",
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        houses = self.object.public_houses
+        self.object.total_property_houses = len(houses)
+        self.object.occupied_property_houses = sum(
+            1 for house in houses if house.occupation or house.has_active_tenant
+        )
+        self.object.available_property_houses = (
+            self.object.total_property_houses - self.object.occupied_property_houses
+        )
+        self.object.available_houses = [
+            house for house in houses
+            if not house.occupation and not house.has_active_tenant
+        ]
+        owner_id = self.object.user_id or next(
+            (house.user_id for house in houses if house.user_id),
+            None,
+        )
+        profile = LandlordProfile.objects.filter(user_id=owner_id).first()
+        _set_landlord_contact(self.object, profile)
+        return context
+
+
 # ============================================================================
 # TENANT VIEWS
 # ============================================================================
@@ -1277,9 +1350,30 @@ class RentChargeCreateViewWeb(LoginRequiredMixin, CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields['tenant'].queryset = Tenant.objects.filter(
+        tenant_queryset = Tenant.objects.filter(
             house__user=self.request.user
         )
+        form.fields['tenant'].queryset = tenant_queryset
+
+        params = self.request.POST if self.request.method == "POST" else self.request.GET
+        tenant_id = params.get("tenant")
+        year = params.get("year")
+        try:
+            year = int(year)
+            tenant_id = int(tenant_id)
+        except (TypeError, ValueError):
+            tenant_id = year = None
+
+        used_months = set()
+        if tenant_id and year and tenant_queryset.filter(pk=tenant_id).exists():
+            used_months = set(
+                RentCharge.objects.filter(tenant_id=tenant_id, year=year)
+                .values_list("month", flat=True)
+            )
+        form.fields["month"].choices = [
+            choice for choice in RentCharge.MONTH_CHOICES
+            if choice[0] not in used_months
+        ]
         return form
 
     def form_valid(self, form):
@@ -1353,6 +1447,12 @@ class RentChargeUpdateViewWeb(LoginRequiredMixin, UpdateView):
 def bulk_create_rent_charges(request):
     current_year = timezone.now().year
     current_month = timezone.now().month
+    selected_year = request.GET.get("year", current_year)
+    selected_month = request.GET.get("month", "")
+    try:
+        selected_year = int(selected_year)
+    except (TypeError, ValueError):
+        selected_year = current_year
 
     # Filter by current user
     active_tenants = Tenant.objects.filter(
@@ -1360,6 +1460,30 @@ def bulk_create_rent_charges(request):
         is_active=True,
         house__isnull=False  # Only tenants with houses
     ).select_related("house")
+
+    active_tenant_ids = list(active_tenants.values_list("pk", flat=True))
+    charged_tenants_by_month = {}
+    for month, tenant_id in RentCharge.objects.filter(
+        tenant_id__in=active_tenant_ids,
+        year=selected_year,
+    ).values_list("month", "tenant_id"):
+        charged_tenants_by_month.setdefault(month, set()).add(tenant_id)
+    available_months = [
+        choice for choice in RentCharge.MONTH_CHOICES
+        if len(charged_tenants_by_month.get(choice[0], set())) < len(active_tenant_ids)
+    ]
+    try:
+        selected_month_int = int(selected_month)
+    except (TypeError, ValueError):
+        selected_month_int = None
+
+    if selected_month_int in {month for month, _ in RentCharge.MONTH_CHOICES}:
+        tenants_with_charge = RentCharge.objects.filter(
+            tenant__in=active_tenants,
+            year=selected_year,
+            month=selected_month_int,
+        ).values_list("tenant_id", flat=True)
+        active_tenants = active_tenants.exclude(pk__in=tenants_with_charge)
 
     active_tenants_count = active_tenants.count()
 
@@ -1452,6 +1576,9 @@ def bulk_create_rent_charges(request):
     context = {
         "current_year": current_year,
         "current_month": current_month,
+        "selected_year": selected_year,
+        "selected_month": selected_month_int,
+        "available_months": available_months,
         "active_tenants": active_tenants,
         "active_tenants_count": active_tenants_count,
         "total_rent": total_rent,

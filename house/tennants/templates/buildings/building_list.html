@@ -80,9 +80,9 @@
                     <td>{{ building.tenant_count }}</td>
                     <td>
                         <div class="action-buttons">
-                            <a class="btn-icon" title="View Details">{% include "_icons.html" with name="eye" %}</a>
-                            <a class="btn-icon" title="Edit">{% include "_icons.html" with name="pencil" %}</a>
-                            <a class="btn-icon danger" title="Delete">{% include "_icons.html" with name="trash" %}</a>
+                            <a href="{% url 'building_detail' building.pk %}" class="btn-icon" title="View Details" aria-label="View {{ building.building_name }}">{% include "_icons.html" with name="eye" %}</a>
+                            <a href="{% url 'building_edit' building.pk %}" class="btn-icon" title="Edit" aria-label="Edit {{ building.building_name }}">{% include "_icons.html" with name="pencil" %}</a>
+                            <a href="{% url 'building_delete' building.pk %}" class="btn-icon danger" title="Delete" aria-label="Delete {{ building.building_name }}">{% include "_icons.html" with name="trash" %}</a>
                         </div>
                     </td>
                 </tr>

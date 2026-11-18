@@ -28,7 +28,7 @@ def tenant_dashboard(request):
         return HttpResponseForbidden()
 
     payments = Payment.objects.filter(tenant=tenant).order_by("-paid_at")
-    charges = RentCharge.objects.filter(tenant=tenant).order_by("-month")
+    charges = RentCharge.objects.filter(tenant=tenant).order_by("-year", "-month")
     issues = Issue.objects.filter(tenant=tenant).order_by("-created_at")
     payment_requests = (
         PaymentRequest.objects.filter(tenant=tenant)

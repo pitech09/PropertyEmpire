@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ building.building_name }} · PropertyEmpire</title>
+    <style>
+        :root { --blue:#1877f2; --green:#176b39; --ink:#172033; --muted:#667085; --line:#e4e7ec; --bg:#f5f7fb; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; line-height:1.5; }
+        a { color:inherit; }
+        .nav { background:#fff; border-bottom:1px solid var(--line); padding:14px 20px; }
+        .nav-inner,.page { width:min(1100px,100%); margin:auto; }
+        .nav-inner { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+        .brand { color:var(--blue); font-size:1.2rem; font-weight:800; text-decoration:none; }
+        .back { color:var(--muted); font-size:.9rem; text-decoration:none; }
+        .page { padding:28px 20px 56px; }
+        .heading { margin-bottom:20px; } .heading h1 { margin:0 0 4px; font-size:clamp(1.7rem,4vw,2.5rem); } .heading p { margin:0; color:var(--muted); }
+        .overview { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:20px 0 26px; }
+        .overview-item { padding:14px; border:1px solid var(--line); border-radius:12px; background:#fff; } .overview-item strong { display:block; font-size:1.35rem; } .overview-item span { color:var(--muted); font-size:.82rem; }
+        .section-title { margin:0 0 12px; font-size:1.25rem; }
+        .houses { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+        .house { overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 6px 18px rgba(16,24,40,.05); }
+        .photo { height:170px; background:linear-gradient(135deg,#dceaff,#f0f5fb); } .photo img { width:100%; height:100%; display:block; object-fit:cover; } .no-photo { display:grid; height:100%; place-items:center; color:#6d8db7; font-size:.78rem; font-weight:750; text-transform:uppercase; }
+        .house-body { padding:16px; } .house h3 { margin:0 0 4px; font-size:1.08rem; } .house p { margin:4px 0; color:var(--muted); font-size:.88rem; }
+        .status { display:inline-flex; margin:10px 0; padding:4px 9px; border-radius:999px; font-size:.74rem; font-weight:750; } .available { color:var(--green); background:#e5f6eb; } .occupied { color:#8a2f2f; background:#fde8e8; }
+        .contact { margin-top:13px; padding-top:13px; border-top:1px solid var(--line); } .contact p { margin:0 0 9px; font-size:.82rem; } .contact-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        .button { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:8px 12px; border-radius:999px; font-size:.81rem; font-weight:750; text-decoration:none; } .call { color:var(--blue); background:#eaf2ff; } .whatsapp { color:var(--green); background:#e5f6eb; }
+        .empty { padding:24px; border:1px dashed var(--line); border-radius:12px; background:#fff; color:var(--muted); text-align:center; }
+        @media (max-width:640px) { .page { padding:22px 14px 40px; } .overview { gap:7px; } .overview-item { padding:11px 8px; } .overview-item strong { font-size:1.1rem; } .overview-item span { font-size:.72rem; } .houses { grid-template-columns:1fr; } .contact .button { width:100%; } }
+    </style>
+</head>
+<body>
+    <nav class="nav"><div class="nav-inner"><a class="brand" href="{% url 'landing' %}">PropertyEmpire</a><a class="back" href="{% url 'landing' %}">Back to search</a></div></nav>
+    <main class="page">
+        <header class="heading"><h1>{{ building.building_name }}</h1><p>{{ building.address }}</p></header>
+        <section class="overview" aria-label="Property overview">
+            <div class="overview-item"><strong>{{ building.total_property_houses }}</strong><span>Total houses</span></div>
+            <div class="overview-item"><strong>{{ building.available_property_houses }}</strong><span>Available now</span></div>
+            <div class="overview-item"><strong>{{ building.occupied_property_houses }}</strong><span>Occupied</span></div>
+        </section>
+        <h2 class="section-title">Available houses in this property</h2>
+        {% if building.available_houses %}
+        <section class="houses">
+            {% for house in building.available_houses %}
+            <article class="house">
+                <div class="photo">{% with photo=house.images.all|first %}{% if photo %}<img src="{{ photo.image.url }}" alt="{{ photo.caption|default:building.building_name }} · House {{ house.house_number }}" loading="lazy">{% else %}<div class="no-photo">House {{ house.house_number }}</div>{% endif %}{% endwith %}</div>
+                <div class="house-body">
+                    <h3>House {{ house.house_number }}</h3>
+                    <p>{{ house.house_size }} · M{{ house.house_rent_amount|floatformat:2 }}/month</p>
+                    {% if house.occupation or house.has_active_tenant %}<span class="status occupied">Occupied</span>{% else %}<span class="status available">Available</span>{% endif %}
+                    {% if building.landlord_phone %}<div class="contact"><p>Landlord: <strong>{{ building.landlord_phone }}</strong></p><div class="contact-actions"><a class="button call" href="tel:{{ building.landlord_phone }}">Call</a>{% if building.landlord_whatsapp_url %}<a class="button whatsapp" href="{{ building.landlord_whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}</div></div>{% else %}<div class="contact"><p>The landlord has not added a public phone number yet.</p></div>{% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+        {% else %}<div class="empty">There are no available houses in this property right now.</div>{% endif %}
+    </main>
+</body>
+</html>

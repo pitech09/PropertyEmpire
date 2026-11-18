@@ -149,8 +149,22 @@ class MaintenanceBidForm(forms.ModelForm):
         model = MaintenanceBid
         fields = ["amount", "estimated_days", "notes"]
         widgets = {
-            "notes": forms.Textarea(attrs={"rows": 3, "placeholder": "Describe your approach, materials needed, etc."}),
-            "amount": forms.NumberInput(attrs={"step": "0.01"}),
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "placeholder": "0.00",
+            }),
+            "estimated_days": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "1",
+                "placeholder": "e.g. 3",
+            }),
+            "notes": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 5,
+                "placeholder": "Describe your approach, materials needed, and any clarifications for the landlord.",
+            }),
         }
 
 
